@@ -1,0 +1,125 @@
+/* ── Graph SVG ───────────────────────────────────────────────────── */
+
+/* Default transitions for all nodes, links, labels */
+.node,
+.link,
+.node-label {
+  transition: opacity 250ms ease;
+}
+
+/* ── Focus mode: dim everything ──────────────────────────────────── */
+.graph--focused .node       { opacity: 0.12; }
+.graph--focused .link       { opacity: 0.08; }
+.graph--focused .node-label { opacity: 0.10; }
+
+/* Active overrides — applied via JS */
+.node--active,
+.link--active,
+.node-label--active {
+  opacity: 1 !important;
+}
+
+/* Active node glow effect — applied to the circle inside the group */
+.node--active circle {
+  filter: url(#glow);
+}
+
+/* Pulse ring on selected node */
+@keyframes ring-pulse {
+  0%   { r: 0;  opacity: 0.8; }
+  100% { r: 22px; opacity: 0; }
+}
+.pulse-ring {
+  fill: none;
+  stroke: var(--node-color, #00c9a7);
+  stroke-width: 2;
+  animation: ring-pulse 1.4s ease-out infinite;
+  pointer-events: none;
+}
+
+/* ── Node types ──────────────────────────────────────────────────── */
+
+/* Hub node */
+.node--hub circle {
+  fill: var(--nr-dark);
+  stroke: var(--nr-green);
+  stroke-width: 3;
+}
+.node--hub text {
+  fill: var(--nr-green);
+  font-weight: 700;
+  font-size: 11px;
+  text-anchor: middle;
+}
+
+/* Category nodes */
+.node--category circle {
+  fill: var(--nr-surface);
+  stroke-width: 2.5;
+}
+.node--category text {
+  fill: var(--nr-text);
+  font-size: 10px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+/* Service nodes */
+.node--service circle {
+  fill: var(--nr-bg);
+  stroke-width: 2;
+}
+.node--service text {
+  fill: var(--nr-muted);
+  font-size: 9px;
+  text-anchor: middle;
+}
+
+/* ── Links ───────────────────────────────────────────────────────── */
+.link--structural {
+  stroke: var(--nr-border);
+  stroke-width: 1;
+  fill: none;
+}
+
+.link--data-flow {
+  fill: none;
+  stroke-width: 1.8;
+  stroke-dasharray: 6 4;
+}
+
+/* Transport colors for data-flow links */
+.link--t-lambda-ext { stroke: var(--t-lambda-ext); }
+.link--t-adot       { stroke: var(--t-adot); }
+.link--t-cwlogs     { stroke: var(--t-cwlogs); }
+.link--t-cwms       { stroke: var(--t-cwms); }
+.link--t-apoll      { stroke: var(--t-apoll); }
+
+/* Animated flow on active data-flow links */
+.link--data-flow.link--active {
+  animation: dash-flow 1.2s linear infinite;
+}
+
+/* Slower for polling transport */
+.link--t-apoll.link--active {
+  animation: dash-flow 2.5s linear infinite;
+}
+
+@keyframes dash-flow {
+  to { stroke-dashoffset: -20; }
+}
+
+/* ── Node labels ─────────────────────────────────────────────────── */
+.node-label {
+  fill: var(--nr-muted);
+  font-size: 10px;
+  text-anchor: middle;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Search highlight ────────────────────────────────────────────── */
+.node--search-match circle {
+  stroke-width: 3;
+  filter: url(#glow);
+}

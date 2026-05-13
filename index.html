@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AWS → New Relic Connectivity Map</title>
+  <meta name="description" content="Interactive mind map showing how AWS services connect to the New Relic platform — data flows, transport mechanisms, and GTM use cases." />
+  <meta property="og:title" content="AWS → New Relic Connectivity Map" />
+  <meta property="og:description" content="Explore how every major AWS service connects to New Relic — for sales engineers and GTM teams." />
+  <meta property="og:type" content="website" />
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%231d252c'/><circle cx='16' cy='16' r='8' fill='%2300c9a7'/></svg>" />
+
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/graph.css" />
+  <link rel="stylesheet" href="css/panel.css" />
+</head>
+<body>
+
+  <!-- ── TOOLBAR ──────────────────────────────────────────────────── -->
+  <header class="toolbar" role="banner">
+    <div class="toolbar__brand">
+      <svg class="toolbar__logo" viewBox="0 0 32 32" aria-hidden="true" width="28" height="28">
+        <circle cx="16" cy="16" r="16" fill="#1d252c"/>
+        <circle cx="16" cy="16" r="8" fill="#00c9a7"/>
+      </svg>
+      <span class="toolbar__title">AWS <span class="toolbar__arrow">→</span> New Relic</span>
+      <span class="toolbar__subtitle">Connectivity Map</span>
+    </div>
+
+    <div class="toolbar__controls">
+      <div class="toolbar__search">
+        <label for="search-input" class="sr-only">Search AWS services</label>
+        <svg class="toolbar__search-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M13 13l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <input id="search-input" class="toolbar__search-input" type="text"
+               placeholder="Search services…" autocomplete="off" />
+      </div>
+
+      <div class="toolbar__filters">
+        <label for="filter-category" class="sr-only">Filter by category</label>
+        <select id="filter-category" class="toolbar__select">
+          <option value="">All Categories</option>
+          <option value="cat-compute">Compute</option>
+          <option value="cat-database">Database</option>
+          <option value="cat-networking">Networking</option>
+          <option value="cat-storage">Storage</option>
+          <option value="cat-streaming">Streaming &amp; Messaging</option>
+          <option value="cat-security">Security</option>
+          <option value="cat-monitoring">Monitoring &amp; Observability</option>
+        </select>
+
+        <label for="filter-product" class="sr-only">Filter by NR product</label>
+        <select id="filter-product" class="toolbar__select">
+          <option value="">All NR Products</option>
+          <option value="APM">APM</option>
+          <option value="Infrastructure Monitoring">Infrastructure</option>
+          <option value="Serverless Monitoring">Serverless</option>
+          <option value="Logs">Logs</option>
+          <option value="Distributed Tracing">Distributed Tracing</option>
+          <option value="Alerts">Alerts</option>
+          <option value="Security Analytics">Security Analytics</option>
+        </select>
+
+        <label for="filter-transport" class="sr-only">Filter by transport</label>
+        <select id="filter-transport" class="toolbar__select">
+          <option value="">All Transports</option>
+          <option value="t-lambda-ext">Lambda Extension</option>
+          <option value="t-cwms">CW Metric Streams</option>
+          <option value="t-cwlogs">CW Logs</option>
+          <option value="t-adot">ADOT / OpenTelemetry</option>
+          <option value="t-apoll">API Polling</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── MAIN CONTENT ─────────────────────────────────────────────── -->
+  <main class="main" role="main">
+
+    <!-- Mind Map Canvas -->
+    <section class="canvas-container" aria-label="AWS to New Relic connectivity mind map">
+      <svg id="graph-svg" role="img" aria-label="Interactive mind map of AWS service connections to New Relic">
+        <defs>
+          <marker id="arrow-data" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="var(--arrow-color, #00c9a7)" />
+          </marker>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <g id="graph-root">
+          <g id="links-layer" class="links-layer"></g>
+          <g id="nodes-layer" class="nodes-layer"></g>
+        </g>
+      </svg>
+
+      <!-- Legend -->
+      <aside class="legend" id="legend" aria-label="Transport type legend">
+        <button class="legend__toggle" id="legend-toggle" aria-expanded="true" aria-controls="legend-body">
+          <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+          Legend
+        </button>
+        <div class="legend__body" id="legend-body">
+          <div class="legend__section-title">Transport</div>
+          <ul class="legend__list">
+            <li><span class="legend__dot t-lambda-ext"></span>Lambda Extension <em>(sub-second)</em></li>
+            <li><span class="legend__dot t-adot"></span>ADOT / OpenTelemetry <em>(sub-second)</em></li>
+            <li><span class="legend__dot t-cwlogs"></span>CW Logs + Forwarder <em>(seconds)</em></li>
+            <li><span class="legend__dot t-cwms"></span>CW Metric Streams <em>(2-3 min)</em></li>
+            <li><span class="legend__dot t-apoll"></span>API Polling <em>(5-15 min)</em></li>
+          </ul>
+          <div class="legend__section-title">Nodes</div>
+          <ul class="legend__list">
+            <li><span class="legend__node-hub"></span>New Relic Platform</li>
+            <li><span class="legend__node-cat"></span>AWS Category</li>
+            <li><span class="legend__node-svc"></span>AWS Service</li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- Tooltip -->
+      <div id="node-tooltip" class="node-tooltip" role="tooltip" aria-hidden="true"></div>
+
+      <!-- First-visit hint -->
+      <div id="first-visit-hint" class="first-visit-hint" role="status" aria-live="polite">
+        <svg viewBox="0 0 20 20" fill="none" width="16" height="16" aria-hidden="true">
+          <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M10 9v5M10 7h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Click any service to explore New Relic use cases
+      </div>
+    </section>
+
+    <!-- Detail Panel -->
+    <aside class="detail-panel" id="detail-panel" aria-label="Service detail panel" aria-hidden="true">
+      <button class="panel__close" id="panel-close" aria-label="Close detail panel">
+        <svg viewBox="0 0 20 20" fill="none" width="16" height="16" aria-hidden="true">
+          <path d="M4 4l12 12M16 4L4 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+
+      <div class="panel__content" id="panel-content">
+        <!-- Populated by panel.js -->
+      </div>
+    </aside>
+  </main>
+
+  <!-- ── SCRIPTS ───────────────────────────────────────────────────── -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,64 @@
+{
+  "transports": [
+    {
+      "id": "t-cwms",
+      "label": "CloudWatch Metric Streams",
+      "shortLabel": "CW Streams",
+      "description": "Near real-time metric streaming via Kinesis Data Firehose to New Relic HTTPS endpoint.",
+      "protocol": "HTTPS/JSON (OpenTelemetry or New Relic format)",
+      "path": ["AWS Service", "CloudWatch", "Metric Streams", "Kinesis Data Firehose", "New Relic Metric API"],
+      "latency": "2-3 min",
+      "freshnessClass": "near-realtime",
+      "cssClass": "t-cwms",
+      "setupComplexity": "medium"
+    },
+    {
+      "id": "t-apoll",
+      "label": "API Polling",
+      "shortLabel": "API Poll",
+      "description": "New Relic Infrastructure agent polls the CloudWatch GetMetricData API on a scheduled interval to collect metrics.",
+      "protocol": "AWS CloudWatch API (HTTPS)",
+      "path": ["AWS Service", "CloudWatch", "GetMetricData API", "New Relic Infrastructure Agent", "New Relic Metric API"],
+      "latency": "5-15 min",
+      "freshnessClass": "polling",
+      "cssClass": "t-apoll",
+      "setupComplexity": "low"
+    },
+    {
+      "id": "t-lambda-ext",
+      "label": "Lambda Extension",
+      "shortLabel": "Lambda Ext",
+      "description": "New Relic Lambda Extension Layer captures telemetry (metrics, traces, logs) before the Lambda invocation response is returned, enabling near-zero-overhead instrumentation.",
+      "protocol": "HTTPS (New Relic Telemetry Ingest API)",
+      "path": ["Lambda Function", "NR Lambda Extension (Layer)", "New Relic Telemetry Ingest API"],
+      "latency": "sub-second",
+      "freshnessClass": "realtime",
+      "cssClass": "t-lambda-ext",
+      "setupComplexity": "low"
+    },
+    {
+      "id": "t-cwlogs",
+      "label": "CloudWatch Logs + Lambda Forwarder",
+      "shortLabel": "CW Logs",
+      "description": "CloudWatch Logs subscription filter triggers the New Relic Forwarder Lambda, which ships log data to the New Relic Logs API.",
+      "protocol": "HTTPS (New Relic Logs API)",
+      "path": ["AWS Service", "CloudWatch Logs", "Subscription Filter", "NR Forwarder Lambda", "New Relic Logs API"],
+      "latency": "seconds",
+      "freshnessClass": "near-realtime",
+      "cssClass": "t-cwlogs",
+      "setupComplexity": "medium"
+    },
+    {
+      "id": "t-adot",
+      "label": "AWS Distro for OpenTelemetry",
+      "shortLabel": "ADOT",
+      "description": "ADOT Collector running as a sidecar container or Lambda layer exports OTLP-formatted telemetry (traces, metrics, logs) directly to the New Relic OTLP endpoint.",
+      "protocol": "OTLP/HTTP or OTLP/gRPC",
+      "path": ["Application / AWS Service", "ADOT Collector", "New Relic OTLP Endpoint"],
+      "latency": "sub-second",
+      "freshnessClass": "realtime",
+      "cssClass": "t-adot",
+      "setupComplexity": "medium"
+    }
+  ]
+}

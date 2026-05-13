@@ -1,0 +1,948 @@
+{
+  "useCases": {
+    "aws-lambda": [
+      {
+        "id": "uc-lambda-cold-start",
+        "title": "Cold Start Latency Analysis",
+        "nrProduct": "Serverless Monitoring",
+        "nrFeature": "Function Details & Invocation Traces",
+        "customerPainPoint": "We can't tell if Lambda cold starts are hurting our users' experience or costing us SLO breaches — we only see average duration and that hides the outliers.",
+        "pitchStatement": "New Relic breaks down every Lambda invocation into init duration, handler duration, and cold start frequency — so you know exactly which functions to optimize and when cold starts cross your SLO threshold. You can set an alert the moment p99 cold start duration spikes above your budget.",
+        "discoveryQuestion": "Are you currently tracking cold start latency per function, and do you know which functions are causing user-facing latency spikes?",
+        "nrqlExample": "SELECT percentile(provider.duration.coldStart, 50, 95, 99) FROM ServerlessSample FACET provider.functionName TIMESERIES 1 hour"
+      },
+      {
+        "id": "uc-lambda-error-anomaly",
+        "title": "Error Rate Anomaly Detection",
+        "nrProduct": "Serverless Monitoring, Applied Intelligence",
+        "nrFeature": "Anomaly Detection, Alerts",
+        "customerPainPoint": "Our Lambda functions throw errors intermittently, but we only find out when a customer complains — by then we've lost transactions and have no idea which invocation caused it.",
+        "pitchStatement": "New Relic captures every Lambda error with full stack trace, correlated to the specific invocation, and uses ML-based anomaly detection to alert you the moment error rates deviate from baseline — before customers notice.",
+        "discoveryQuestion": "How do you currently find out when a Lambda function starts throwing errors — do you get proactive alerts or do you rely on customer reports?",
+        "nrqlExample": "SELECT percentage(count(*), WHERE provider.errors > 0) AS 'Error Rate' FROM ServerlessSample FACET provider.functionName TIMESERIES 30 minutes"
+      },
+      {
+        "id": "uc-lambda-cost-optimization",
+        "title": "Cost Optimization via Duration vs Memory Analysis",
+        "nrProduct": "Serverless Monitoring",
+        "nrFeature": "Function Performance & Cost Analysis",
+        "customerPainPoint": "Our Lambda bill keeps growing but we don't know which functions are over-provisioned with memory or running longer than they should — we're paying for waste we can't see.",
+        "pitchStatement": "New Relic correlates invocation duration with configured memory size so you can identify functions where memory is over-provisioned relative to actual usage, and quantify the dollar cost of optimization opportunities across your entire Lambda fleet.",
+        "discoveryQuestion": "Do you have visibility into which Lambda functions are the biggest cost drivers, and whether their memory allocation matches their actual runtime needs?",
+        "nrqlExample": "SELECT average(provider.duration.millis), average(provider.memorySize.bytes), average(provider.billedDuration.millis) FROM ServerlessSample FACET provider.functionName LIMIT 20"
+      },
+      {
+        "id": "uc-lambda-distributed-trace",
+        "title": "Distributed Trace Correlation Across Downstream Services",
+        "nrProduct": "Distributed Tracing, APM",
+        "nrFeature": "Service Maps, Trace Waterfall",
+        "customerPainPoint": "When a user-facing request fails, we have no idea if the issue is in the Lambda function itself or a downstream service like DynamoDB, SQS, or an external API — debugging takes hours of log grepping.",
+        "pitchStatement": "New Relic auto-instruments Lambda with distributed tracing so every invocation carries a trace ID through to downstream calls — DynamoDB, SQS, HTTP — giving you a full waterfall from the triggering event to the root cause in a single view.",
+        "discoveryQuestion": "When a Lambda function fails, how long does it take your team to determine whether the issue is in the function code or a downstream dependency?",
+        "nrqlExample": "SELECT count(*) FROM Span WHERE cloud.provider = 'aws' AND aws.lambda.functionName IS NOT NULL FACET name, db.system TIMESERIES"
+      },
+      {
+        "id": "uc-lambda-dlq-correlation",
+        "title": "Dead Letter Queue Correlation",
+        "nrProduct": "Serverless Monitoring, Infrastructure Monitoring",
+        "nrFeature": "Alerts, SQS & Lambda Correlation",
+        "customerPainPoint": "Messages pile up in our dead letter queues and we don't know if it's a Lambda error, a timeout, a permissions issue, or a bad message format — we find out days later when someone checks the DLQ manually.",
+        "pitchStatement": "New Relic correlates Lambda error events with SQS DLQ depth metrics in a single dashboard, so you can see the exact moment function failures started routing messages to the DLQ and drill into the specific invocation errors that caused it.",
+        "discoveryQuestion": "When was the last time you discovered messages accumulating in a dead letter queue — and how quickly could you identify the Lambda function and error type responsible?",
+        "nrqlExample": "SELECT sum(provider.deadLetterErrors.sum) FROM ServerlessSample FACET provider.functionName WHERE provider.deadLetterErrors.sum > 0 TIMESERIES 1 hour"
+      }
+    ],
+    "aws-ec2": [
+      {
+        "id": "uc-ec2-cpu-memory-saturation",
+        "title": "CPU and Memory Saturation Alerts Before User Impact",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "Host Monitoring, Predictive Alerting",
+        "customerPainPoint": "By the time we get paged about a high-CPU EC2 instance, the application is already degraded and users are seeing errors — we're always reacting instead of preventing.",
+        "pitchStatement": "New Relic's infrastructure agent streams CPU, memory, disk, and network metrics at one-minute granularity and lets you set dynamic baseline alerts so you're notified when a host is trending toward saturation — before it hits 100% and takes down your app.",
+        "discoveryQuestion": "Are you currently alerted when EC2 instances approach CPU or memory saturation, or do you only find out after application performance degrades?",
+        "nrqlExample": "SELECT average(cpuPercent), average(memoryUsedPercent) FROM SystemSample FACET hostname WHERE cpuPercent > 80 TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-ec2-asg-health",
+        "title": "Auto Scaling Group Health Visibility",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "EC2 Auto Scaling Integration",
+        "customerPainPoint": "We have Auto Scaling groups but we can't tell if they're scaling for the right reasons — is it a real traffic spike or a runaway process on a single host? We end up paying for unnecessary instances.",
+        "pitchStatement": "New Relic aggregates host-level metrics across your Auto Scaling groups so you can see which specific instances triggered a scale-out event, correlate scaling activity with application metrics, and validate that your scaling policies are responding to real demand.",
+        "discoveryQuestion": "Do you have visibility into why your Auto Scaling groups scale — can you correlate a scale-out event back to the specific metric or instance that triggered it?",
+        "nrqlExample": "SELECT average(cpuPercent), uniqueCount(hostname) FROM SystemSample FACET `ec2AutoScalingGroupName` TIMESERIES 10 minutes"
+      },
+      {
+        "id": "uc-ec2-log-aggregation",
+        "title": "OS-Level Log Aggregation and Search",
+        "nrProduct": "Log Management",
+        "nrFeature": "Log Search, Parsing, and Alerting",
+        "customerPainPoint": "Our EC2 instances write logs to local disk and we have to SSH into individual servers to troubleshoot — there's no central place to search across all instances at once.",
+        "pitchStatement": "New Relic's infrastructure agent forwards OS and application logs from every EC2 instance into a centralized log store with full-text search, pattern extraction, and alerting — so you can find that one error line across a thousand instances in seconds.",
+        "discoveryQuestion": "How do you currently search application logs across multiple EC2 instances — and how long does it take to find a specific error that happened two hours ago?",
+        "nrqlExample": "SELECT message FROM Log WHERE hostname LIKE 'prod-web%' AND message LIKE '%ERROR%' SINCE 1 hour ago LIMIT 100"
+      },
+      {
+        "id": "uc-ec2-app-host-correlation",
+        "title": "Application Performance Correlation with Host Health",
+        "nrProduct": "APM, Infrastructure Monitoring",
+        "nrFeature": "Connected APM + Infra View",
+        "customerPainPoint": "Our app response times degrade randomly and we can never tell if it's the application code, a noisy-neighbor EC2 host, memory pressure, or a network issue — we waste hours ruling out infrastructure before looking at code.",
+        "pitchStatement": "New Relic connects APM transaction data to the underlying EC2 host metrics in a single correlated view — so when response times spike, you immediately see whether CPU, memory, or disk I/O on that specific host is the contributing factor.",
+        "discoveryQuestion": "When your application slows down, how quickly can you determine whether the cause is application-level or infrastructure-level — and do you have a single view that shows both?",
+        "nrqlExample": "SELECT average(duration), average(cpuPercent), average(memoryUsedPercent) FROM Transaction, SystemSample WHERE appName = 'my-app' TIMESERIES 5 minutes"
+      }
+    ],
+    "aws-ecs": [
+      {
+        "id": "uc-ecs-cpu-memory-limits",
+        "title": "Container CPU and Memory Limit Violations",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "ECS Container Monitoring",
+        "customerPainPoint": "Our ECS tasks get OOM-killed and throttled but we only know after the fact when the service starts dropping requests — we have no visibility into which containers are approaching their limits.",
+        "pitchStatement": "New Relic monitors CPU throttle percentage and memory utilization against task definition limits for every ECS container, alerting you when a container is consistently being throttled so you can right-size limits before tasks fail.",
+        "discoveryQuestion": "Do you currently track CPU throttling or memory utilization against defined limits at the individual container level in your ECS clusters?",
+        "nrqlExample": "SELECT average(cpuThrottledPercent), average(memoryUsageBytes / memoryLimitBytes * 100) FROM ContainerSample FACET containerName TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-ecs-task-failure-restart",
+        "title": "Task Failure and Restart Loop Detection",
+        "nrProduct": "Infrastructure Monitoring, Applied Intelligence",
+        "nrFeature": "Anomaly Detection, ECS Task Events",
+        "customerPainPoint": "ECS tasks restart silently in the background — a service can be in a crash loop for hours before someone notices the increased task count in the console, and by then we've missed SLAs.",
+        "pitchStatement": "New Relic detects ECS task stop and restart events in real time, correlates them with container-level error logs, and alerts you when restart frequency exceeds a threshold — giving you the error and the context to fix it fast.",
+        "discoveryQuestion": "How do you know when an ECS task has entered a crash loop — do you have automated alerting, or do you discover it manually?",
+        "nrqlExample": "SELECT count(*) FROM InfrastructureEvent WHERE category = 'tasks' AND changeType = 'taskStopped' FACET clusterName, taskFamily TIMESERIES 10 minutes"
+      },
+      {
+        "id": "uc-ecs-distributed-tracing",
+        "title": "Distributed Tracing Across Microservices",
+        "nrProduct": "APM, Distributed Tracing",
+        "nrFeature": "Service Maps, Trace Waterfall",
+        "customerPainPoint": "We run 40+ microservices on ECS and when a user reports a slow checkout, we have no way to follow the request across services — we end up spending half a day just figuring out which service is the bottleneck.",
+        "pitchStatement": "New Relic auto-instruments ECS services and propagates trace context across every service boundary, giving you a complete request waterfall from the entry point through all downstream services — so you can identify the bottleneck in minutes, not hours.",
+        "discoveryQuestion": "When a performance issue is reported in your ECS-based application, how long does it typically take to identify which microservice or service dependency is responsible?",
+        "nrqlExample": "SELECT count(*), average(duration) FROM Span WHERE containerId IS NOT NULL FACET service.name, name WHERE duration > 0.5 LIMIT 20"
+      },
+      {
+        "id": "uc-ecs-service-latency-baseline",
+        "title": "Service-to-Service Latency Baseline and SLO Tracking",
+        "nrProduct": "APM, Service Level Management",
+        "nrFeature": "Service Level Objectives, Service Maps",
+        "customerPainPoint": "We don't have a baseline for what normal latency looks like between our ECS services — so when something is 'slow' we argue about whether it's actually a problem or just noisy.",
+        "pitchStatement": "New Relic establishes latency baselines for every service-to-service call in your ECS environment and lets you define SLOs against those baselines — so 'slow' has a precise definition and you can track SLO compliance over rolling windows.",
+        "discoveryQuestion": "Do you have defined SLOs for your ECS microservices, and can you measure SLO compliance per service on a weekly or monthly basis?",
+        "nrqlExample": "SELECT percentile(duration, 50, 95, 99) FROM Span WHERE service.name IS NOT NULL FACET service.name TIMESERIES 1 hour"
+      }
+    ],
+    "aws-api-gateway": [
+      {
+        "id": "uc-apigw-latency-percentiles",
+        "title": "API Latency Percentile Tracking by Endpoint",
+        "nrProduct": "APM, Distributed Tracing",
+        "nrFeature": "Transaction Traces, Key Transactions",
+        "customerPainPoint": "Our API average latency looks fine but specific endpoints are slow for a subset of users — we don't have per-endpoint p95 or p99 visibility so we keep missing the outliers that drive churn.",
+        "pitchStatement": "New Relic tracks p50, p95, and p99 latency for every API Gateway endpoint and stage, so you can identify the specific routes where tail latency is degrading user experience and tie them back to the downstream services causing the slowness.",
+        "discoveryQuestion": "Are you tracking latency percentiles per API endpoint today — specifically p99 — and do you know which endpoints have the worst tail latency?",
+        "nrqlExample": "SELECT percentile(provider.integrationLatency.average, 50, 95, 99) FROM ApiGatewaySample FACET provider.resourcePath TIMESERIES 30 minutes"
+      },
+      {
+        "id": "uc-apigw-error-rate-by-stage",
+        "title": "4xx and 5xx Error Rate by Stage and Resource",
+        "nrProduct": "APM",
+        "nrFeature": "Error Analytics, Alerts",
+        "customerPainPoint": "We have multiple API Gateway stages — dev, staging, prod — and when error rates spike we have no quick way to determine which stage, which resource, and which HTTP method is responsible.",
+        "pitchStatement": "New Relic surfaces 4xx and 5xx error rates faceted by stage, resource path, and HTTP method in real time, with alerting thresholds per route so your team is notified the moment a specific endpoint starts failing — before it impacts your SLA.",
+        "discoveryQuestion": "How do you currently monitor error rates across different API Gateway stages and endpoints — do you have per-route error alerting in place?",
+        "nrqlExample": "SELECT sum(provider.count4XXError.sum), sum(provider.count5XXError.sum) FROM ApiGatewaySample FACET provider.stage, provider.resourcePath TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-apigw-throttling-quota",
+        "title": "Throttling and Quota Limit Alerting",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "Alerts, CloudWatch Metric Integration",
+        "customerPainPoint": "API Gateway throttles requests when we hit rate limits but we find out from customer complaints, not from our monitoring — and by then we've dropped revenue and have no data on how long it lasted.",
+        "pitchStatement": "New Relic alerts on API Gateway throttle counts in real time and lets you correlate throttling events with upstream traffic spikes, so you can proactively adjust throttle limits or scale backend capacity before customers experience 429 errors.",
+        "discoveryQuestion": "Do you have real-time visibility into API throttling events — do you know how often your APIs hit rate limits and how long those throttle windows last?",
+        "nrqlExample": "SELECT sum(provider.throttleCount.sum) AS 'Throttled Requests' FROM ApiGatewaySample FACET provider.apiName, provider.stage TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-apigw-log-correlation",
+        "title": "Request and Response Log Search and Correlation",
+        "nrProduct": "Log Management",
+        "nrFeature": "Log Search, Correlated Logs and Traces",
+        "customerPainPoint": "When a customer reports a failed API call, we have to dig through CloudWatch Logs manually to find the specific request — it takes 30 minutes to find a single log line and we can't correlate it with what happened downstream.",
+        "pitchStatement": "New Relic ingests API Gateway access logs and correlates them with distributed trace IDs so you can find any API request by customer ID, correlation ID, or error message in seconds and immediately pivot to the full trace showing what failed downstream.",
+        "discoveryQuestion": "When a specific API call fails for a customer, how long does it take your team to find the corresponding log entry and understand what happened end-to-end?",
+        "nrqlExample": "SELECT message, requestId, status FROM Log WHERE logGroup LIKE '/aws/apigateway/%' AND status >= 400 SINCE 1 hour ago LIMIT 50"
+      }
+    ],
+    "aws-rds": [
+      {
+        "id": "uc-rds-slow-query",
+        "title": "Query Latency and Slow Query Identification",
+        "nrProduct": "APM",
+        "nrFeature": "Database Monitoring, Slow Query Analysis",
+        "customerPainPoint": "Our application slows down periodically and we suspect the database but we can't pinpoint which queries are slow — our DBAs spend hours analyzing query logs manually and often can't reproduce the issue.",
+        "pitchStatement": "New Relic captures query-level performance data from RDS including execution time, rows examined, and query text, surfacing the slowest queries by frequency and impact so your DBA can focus optimization efforts on the queries that actually matter.",
+        "discoveryQuestion": "Do you have visibility into your top 10 slowest database queries right now, and do you know how their performance has changed over the past week?",
+        "nrqlExample": "SELECT average(provider.readLatency.average), average(provider.writeLatency.average) FROM RdsDbInstanceSample FACET `provider.dbInstanceIdentifier` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-rds-connection-saturation",
+        "title": "Connection Pool Saturation Alerts",
+        "nrProduct": "Infrastructure Monitoring, APM",
+        "nrFeature": "RDS Monitoring, Alerts",
+        "customerPainPoint": "Our RDS instance hits max connections during traffic spikes and applications start throwing 'too many connections' errors — we never know it's happening until the app is down.",
+        "pitchStatement": "New Relic monitors RDS connection count against your max_connections limit and alerts you when utilization exceeds a threshold, giving you time to either scale the instance, tune your connection pool, or add a proxy before the database becomes unavailable.",
+        "discoveryQuestion": "Do you know what percentage of your RDS max_connections limit you're typically consuming at peak traffic — and do you have an alert before it reaches 100%?",
+        "nrqlExample": "SELECT average(provider.databaseConnections.average), max(provider.databaseConnections.maximum) FROM RdsDbInstanceSample FACET `provider.dbInstanceIdentifier` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-rds-storage-iops-planning",
+        "title": "Storage and IOPS Capacity Planning",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "Capacity Planning Dashboards",
+        "customerPainPoint": "We've been surprised twice by running out of RDS storage in production — we only notice when the database stops accepting writes, which causes data loss and emergency maintenance windows.",
+        "pitchStatement": "New Relic tracks RDS free storage space and IOPS utilization with trend analysis so you can project when you'll run out of storage or hit IOPS limits, giving you weeks of lead time to provision additional capacity without emergency downtime.",
+        "discoveryQuestion": "How do you currently track RDS storage growth — do you have a projection of when your current instance will run out of free storage?",
+        "nrqlExample": "SELECT latest(provider.freeStorageSpaceBytes.average) / 1e9 AS 'Free Storage GB', latest(provider.readIOPS.average + provider.writeIOPS.average) AS 'Total IOPS' FROM RdsDbInstanceSample FACET `provider.dbInstanceIdentifier` TIMESERIES 1 day"
+      },
+      {
+        "id": "uc-rds-replication-lag",
+        "title": "Replication Lag Detection for Read Replicas",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "RDS Monitoring, Alerts",
+        "customerPainPoint": "We route read traffic to RDS read replicas to reduce load on the primary, but when replication lag spikes, our users see stale data — we don't know about it until someone reports a data consistency issue.",
+        "pitchStatement": "New Relic monitors RDS replica lag in real time and alerts you the moment lag exceeds your data freshness SLA, so you can reroute traffic back to the primary or investigate the replication issue before users see stale data.",
+        "discoveryQuestion": "Do you have alerting on RDS read replica lag — and do you have a defined threshold for acceptable lag before it affects your application's data consistency guarantees?",
+        "nrqlExample": "SELECT average(provider.replicaLag.average) AS 'Replica Lag (seconds)' FROM RdsDbInstanceSample WHERE provider.replicaLag.average IS NOT NULL FACET `provider.dbInstanceIdentifier` TIMESERIES 5 minutes"
+      }
+    ],
+    "aws-dynamodb": [
+      {
+        "id": "uc-dynamodb-capacity-trends",
+        "title": "Read/Write Capacity Unit Consumption Trends",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "DynamoDB Monitoring, Capacity Dashboards",
+        "customerPainPoint": "Our DynamoDB bill spikes unpredictably and we can't tell if we're over-provisioning capacity or if specific tables are consuming far more RCUs and WCUs than expected — we're flying blind on cost optimization.",
+        "pitchStatement": "New Relic visualizes consumed RCUs and WCUs per table over time against your provisioned capacity, helping you identify tables that are consistently under- or over-provisioned and giving you the data to right-size or switch to on-demand mode.",
+        "discoveryQuestion": "Do you have visibility into which DynamoDB tables consume the most read and write capacity, and how that consumption trends over a week or month?",
+        "nrqlExample": "SELECT sum(provider.consumedReadCapacityUnits.sum), sum(provider.consumedWriteCapacityUnits.sum) FROM DynamoDbTableSample FACET `provider.tableName` TIMESERIES 1 hour"
+      },
+      {
+        "id": "uc-dynamodb-throttle-detection",
+        "title": "Throttled Request Detection and Alerting",
+        "nrProduct": "Infrastructure Monitoring, Applied Intelligence",
+        "nrFeature": "Anomaly Detection, Alerts",
+        "customerPainPoint": "DynamoDB throttles our requests when we exceed provisioned capacity and our application starts returning errors, but we only notice when customers complain — we have no proactive alerting on throttles.",
+        "pitchStatement": "New Relic alerts on DynamoDB throttled read and write events in real time so you can respond before throttling cascades into application errors, and you can correlate the throttle events with the specific tables and time windows to tune capacity proactively.",
+        "discoveryQuestion": "Are you monitoring DynamoDB throttling events today — do you know which tables have been throttled in the last 24 hours and how many requests were rejected?",
+        "nrqlExample": "SELECT sum(provider.readThrottleEvents.sum), sum(provider.writeThrottleEvents.sum) FROM DynamoDbTableSample FACET `provider.tableName` WHERE provider.readThrottleEvents.sum > 0 OR provider.writeThrottleEvents.sum > 0 TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-dynamodb-hot-partition",
+        "title": "Hot Partition Identification",
+        "nrProduct": "Infrastructure Monitoring, APM",
+        "nrFeature": "DynamoDB Monitoring, Trace Analysis",
+        "customerPainPoint": "We know DynamoDB hot partitions are a problem in theory but we have no way to detect when they're happening — by the time we see throttles, we've already lost requests and can't tell which partition key design is at fault.",
+        "pitchStatement": "New Relic surfaces DynamoDB partition-level throttle patterns and correlates them with application-level request traces so you can identify which partition key values are creating hot spots and make schema or access pattern changes before they become outages.",
+        "discoveryQuestion": "Have you ever experienced DynamoDB hot partition issues — and if so, how did you identify which partition key values were causing the uneven distribution?",
+        "nrqlExample": "SELECT sum(provider.readThrottleEvents.sum + provider.writeThrottleEvents.sum) AS 'Total Throttle Events' FROM DynamoDbTableSample FACET `provider.tableName` SINCE 1 day ago"
+      },
+      {
+        "id": "uc-dynamodb-item-latency",
+        "title": "Item-Level Latency Tracking",
+        "nrProduct": "APM, Distributed Tracing",
+        "nrFeature": "Database Monitoring, Trace Waterfall",
+        "customerPainPoint": "Our application has random latency spikes that seem database-related but we can't confirm it — DynamoDB's GetItem and Query operations look fine in aggregate but individual slow operations are hidden in the averages.",
+        "pitchStatement": "New Relic instruments DynamoDB SDK calls at the application level, capturing per-operation latency for GetItem, PutItem, Query, and Scan so you can identify which specific operations and table access patterns are contributing to tail latency.",
+        "discoveryQuestion": "Do you track the p99 latency of individual DynamoDB operations like GetItem and Query — and can you correlate slow DynamoDB calls to specific user transactions?",
+        "nrqlExample": "SELECT percentile(duration, 50, 95, 99) FROM Span WHERE db.system = 'dynamodb' FACET db.operation, db.aws.table TIMESERIES 5 minutes"
+      }
+    ],
+    "aws-elasticache": [
+      {
+        "id": "uc-elasticache-hit-rate",
+        "title": "Cache Hit Rate Monitoring and Trending",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "ElastiCache Monitoring, Dashboards",
+        "customerPainPoint": "We invested in ElastiCache to reduce database load but we have no idea if our cache is actually effective — if the hit rate is low we're paying for cache and still hammering the database.",
+        "pitchStatement": "New Relic tracks your ElastiCache hit rate over time and alerts you when it drops below a threshold, giving you the data to identify which application access patterns are causing cache misses and whether your TTL or eviction policy needs tuning.",
+        "discoveryQuestion": "Do you know your current ElastiCache cache hit rate — and do you have a target hit rate as part of your caching strategy?",
+        "nrqlExample": "SELECT sum(provider.cacheHits.sum) / (sum(provider.cacheHits.sum) + sum(provider.cacheMisses.sum)) * 100 AS 'Hit Rate %' FROM ElastiCacheRedisNodeSample FACET `provider.replicationGroupId` TIMESERIES 1 hour"
+      },
+      {
+        "id": "uc-elasticache-eviction-rate",
+        "title": "Memory Eviction Rate Alerting",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "ElastiCache Monitoring, Alerts",
+        "customerPainPoint": "ElastiCache is evicting keys because we're running out of memory, which means the cache hit rate degrades silently — the first symptom is database load going up and we have no early warning.",
+        "pitchStatement": "New Relic monitors ElastiCache eviction rates and available memory, alerting you when evictions spike so you can either scale the cluster, adjust the maxmemory-policy, or remove unnecessary keys before your database starts seeing the cache miss pressure.",
+        "discoveryQuestion": "Are you monitoring ElastiCache eviction rates — do you know if your cache is evicting keys today, and what that means for your database query load?",
+        "nrqlExample": "SELECT sum(provider.evictions.sum) AS 'Evictions', average(provider.freeableMemory.average) / 1e6 AS 'Free Memory MB' FROM ElastiCacheRedisNodeSample FACET `provider.cacheClusterId` TIMESERIES 10 minutes"
+      },
+      {
+        "id": "uc-elasticache-connection-saturation",
+        "title": "Connection Count Saturation Alerting",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "ElastiCache Monitoring, Alerts",
+        "customerPainPoint": "Our ElastiCache cluster occasionally refuses new connections during traffic spikes — the application throws connection errors and we can't quickly tell if it's a client-side connection leak or cluster-level saturation.",
+        "pitchStatement": "New Relic tracks current connections against the ElastiCache cluster's max connections limit and alerts when utilization approaches the threshold, so you can identify whether it's a client connection pool misconfiguration or the need to scale the cluster before connections are refused.",
+        "discoveryQuestion": "Do you track the current connection count on your ElastiCache cluster — and do you know how close you've been to hitting the connection limit during your peak traffic periods?",
+        "nrqlExample": "SELECT average(provider.currConnections.average), max(provider.currConnections.maximum) FROM ElastiCacheRedisNodeSample FACET `provider.cacheClusterId` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-elasticache-node-health",
+        "title": "Cluster Node Health Monitoring",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "ElastiCache Monitoring, Alerts",
+        "customerPainPoint": "We run a multi-node ElastiCache cluster for high availability, but if a node fails or degrades silently, we don't know until the application starts seeing latency spikes from the surviving nodes being overloaded.",
+        "pitchStatement": "New Relic monitors every node in your ElastiCache cluster individually — CPU, replication lag, bytes used, and network throughput — and alerts you when a node is unhealthy or falling behind replication so you can take action before clients are impacted.",
+        "discoveryQuestion": "Do you have per-node health monitoring for your ElastiCache cluster — can you quickly identify which node in a cluster is struggling during an incident?",
+        "nrqlExample": "SELECT average(provider.cpuUtilization.average), average(provider.replicationLag.average), average(provider.bytesUsedForCache.average) / 1e9 AS 'Cache Size GB' FROM ElastiCacheRedisNodeSample FACET `provider.cacheClusterId`, `provider.cacheNodeId` TIMESERIES 10 minutes"
+      }
+    ],
+    "aws-alb": [
+      {
+        "id": "uc-alb-target-response-time",
+        "title": "Backend Target Response Time by Target Group",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "ALB Monitoring, Target Group Dashboards",
+        "customerPainPoint": "Our ALB shows acceptable overall latency but specific target groups serving certain API paths are slow — we can't see which backend hosts or target groups are the culprits without digging through CloudWatch.",
+        "pitchStatement": "New Relic breaks down ALB target response time by target group and individual target, so you can identify whether latency is concentrated in a specific backend host, availability zone, or service before it affects your users at scale.",
+        "discoveryQuestion": "Can you currently see latency broken down by individual target group and backend host in your ALB environment — not just aggregate load balancer latency?",
+        "nrqlExample": "SELECT average(provider.targetResponseTime.average), percentile(provider.targetResponseTime.p99, 99) FROM AlbSample FACET `provider.targetGroupArn` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-alb-5xx-error-alerting",
+        "title": "5xx Error Rate Alerting",
+        "nrProduct": "Infrastructure Monitoring, Applied Intelligence",
+        "nrFeature": "ALB Monitoring, Anomaly Alerts",
+        "customerPainPoint": "5xx errors from our ALB go unnoticed until they reach a volume that triggers customer support tickets — we need proactive alerting on error rate spikes, not reactive incident management.",
+        "pitchStatement": "New Relic monitors ALB 5xx error rates with ML-based anomaly detection, alerting you the moment error rates deviate from your normal baseline so you can investigate and mitigate before the error count reaches SLA-breaching levels.",
+        "discoveryQuestion": "Do you have automated alerting on 5xx error rates from your ALB today — and if so, is it threshold-based or does it account for normal traffic variation?",
+        "nrqlExample": "SELECT sum(provider.httpCode_ELB_5XX_Count.sum), sum(provider.httpCode_Target_5XX_Count.sum) FROM AlbSample FACET `provider.loadBalancer` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-alb-unhealthy-targets",
+        "title": "Unhealthy Target Count and Health Check Failures",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "ALB Target Health Monitoring, Alerts",
+        "customerPainPoint": "Targets go unhealthy and get removed from rotation without anyone noticing — by the time we realize we're running on reduced capacity, the remaining targets are overwhelmed and we have a partial outage.",
+        "pitchStatement": "New Relic tracks healthy versus unhealthy target counts per target group in real time and alerts when unhealthy targets exceed a threshold, giving you early warning of capacity degradation before the remaining targets are overloaded.",
+        "discoveryQuestion": "Do you get alerted when ALB targets fail health checks — and do you know how many targets you could lose before your remaining capacity would be overwhelmed?",
+        "nrqlExample": "SELECT latest(provider.healthyHostCount.average), latest(provider.unHealthyHostCount.average) FROM AlbSample FACET `provider.targetGroupArn`, `provider.availabilityZone` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-alb-request-routing-anomaly",
+        "title": "Request Routing Anomaly Detection",
+        "nrProduct": "Infrastructure Monitoring, Applied Intelligence",
+        "nrFeature": "Anomaly Detection, ALB Monitoring",
+        "customerPainPoint": "Traffic shifts during deployments or incidents and we can't tell in real time if traffic is routing correctly across target groups — misrouted traffic during canary deployments has caused production incidents.",
+        "pitchStatement": "New Relic baselines your normal traffic distribution across ALB target groups and alerts when routing deviates from expected patterns — whether due to a misconfigured listener rule, a failed deployment, or an unexpected traffic surge to a specific path.",
+        "discoveryQuestion": "During your last deployment or canary rollout, did you have real-time visibility into how traffic was being distributed across your ALB target groups?",
+        "nrqlExample": "SELECT sum(provider.requestCount.sum) FROM AlbSample FACET `provider.targetGroupArn` TIMESERIES 5 minutes"
+      }
+    ],
+    "aws-vpc": [
+      {
+        "id": "uc-vpc-east-west-traffic",
+        "title": "Unusual East-West Traffic Detection",
+        "nrProduct": "Network Performance Monitoring",
+        "nrFeature": "VPC Flow Log Analysis, Anomaly Detection",
+        "customerPainPoint": "We have no visibility into east-west traffic between our internal services — if a compromised workload is scanning the network or moving data laterally, we won't know until after a breach is confirmed.",
+        "pitchStatement": "New Relic ingests VPC Flow Logs and analyzes east-west traffic patterns with ML-based anomaly detection, alerting you when internal traffic between subnets or security groups deviates from baseline — a key early indicator of lateral movement.",
+        "discoveryQuestion": "Do you have visibility into traffic patterns between your internal AWS workloads — specifically, would you know if one EC2 instance started making unusual connections to others?",
+        "nrqlExample": "SELECT sum(bytes) AS 'Total Bytes', count(*) AS 'Flow Count' FROM Log WHERE logtype = 'vpc-flow' AND action = 'ACCEPT' FACET srcAddr, dstAddr SINCE 1 hour ago LIMIT 20"
+      },
+      {
+        "id": "uc-vpc-top-talkers",
+        "title": "Top Talkers and Data Exfiltration Pattern Identification",
+        "nrProduct": "Network Performance Monitoring, Log Management",
+        "nrFeature": "VPC Flow Log Analysis, Security Dashboards",
+        "customerPainPoint": "We can't see which workloads are generating the most outbound traffic or whether any are sending unusual volumes of data to external IPs — data exfiltration could go undetected for days.",
+        "pitchStatement": "New Relic analyzes VPC Flow Logs to identify top-talker IPs and flag workloads sending abnormally high volumes of data to external destinations, giving your security team the visibility to investigate potential exfiltration before data loss occurs.",
+        "discoveryQuestion": "Do you have visibility into which of your AWS workloads are generating the most outbound internet traffic — and would you know if one started sending gigabytes of data to an unknown external IP?",
+        "nrqlExample": "SELECT sum(bytes) AS 'Bytes Out' FROM Log WHERE logtype = 'vpc-flow' AND direction = 'egress' AND dstAddr NOT LIKE '10.%' AND dstAddr NOT LIKE '172.%' AND dstAddr NOT LIKE '192.168.%' FACET srcAddr SINCE 24 hours ago LIMIT 10"
+      },
+      {
+        "id": "uc-vpc-security-group-analysis",
+        "title": "Security Group Rule Effectiveness Analysis",
+        "nrProduct": "Log Management, Security",
+        "nrFeature": "VPC Flow Log Analysis, Security Dashboards",
+        "customerPainPoint": "Our security groups have accumulated hundreds of rules over the years and we don't know which ones are actually being used — we're afraid to remove any, so our attack surface keeps growing.",
+        "pitchStatement": "New Relic analyzes VPC Flow Logs to show you which traffic is being accepted versus rejected by security groups, identifying rules that never match any traffic so your security team can confidently prune unused rules and tighten your network posture.",
+        "discoveryQuestion": "When did you last audit your VPC security group rules — and do you have data on which rules are actively matching traffic versus which have never been triggered?",
+        "nrqlExample": "SELECT count(*) AS 'Rejected Connections' FROM Log WHERE logtype = 'vpc-flow' AND action = 'REJECT' FACET dstPort, srcAddr SINCE 24 hours ago LIMIT 20"
+      },
+      {
+        "id": "uc-vpc-cross-az-cost",
+        "title": "Cross-AZ Traffic Cost Awareness",
+        "nrProduct": "Network Performance Monitoring",
+        "nrFeature": "VPC Flow Log Analysis, Cost Dashboards",
+        "customerPainPoint": "Our AWS data transfer bill keeps growing but we can't identify which services are generating cross-AZ traffic — we know it's expensive but we have no way to attribute the cost to specific workloads.",
+        "pitchStatement": "New Relic analyzes VPC Flow Logs to quantify cross-AZ traffic volumes by source and destination, helping you identify which services are incurring the most inter-AZ data transfer costs so you can make informed architecture decisions about placement and load balancing.",
+        "discoveryQuestion": "Do you have visibility into how much cross-AZ traffic your workloads generate — and have you been able to quantify the AWS data transfer cost associated with specific services?",
+        "nrqlExample": "SELECT sum(bytes) / 1e9 AS 'GB Transferred' FROM Log WHERE logtype = 'vpc-flow' AND srcAz != dstAz FACET srcAddr, dstAddr SINCE 1 day ago LIMIT 20"
+      }
+    ],
+    "aws-cloudfront": [
+      {
+        "id": "uc-cloudfront-cache-hit-ratio",
+        "title": "Cache Hit Ratio Optimization",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "CloudFront Monitoring, Dashboards",
+        "customerPainPoint": "We deployed CloudFront to reduce origin load and improve latency, but we don't know if our cache hit ratio is good or bad — poor cache configuration could mean we're paying for CDN without getting the benefit.",
+        "pitchStatement": "New Relic tracks your CloudFront cache hit ratio by distribution and behavior, alerting you when hit rates drop so you can investigate whether a cache header change, query string variation, or TTL misconfiguration is causing unnecessary origin requests.",
+        "discoveryQuestion": "Do you know your current CloudFront cache hit ratio by distribution — and do you have a target hit rate that you're measuring against?",
+        "nrqlExample": "SELECT sum(provider.requests.sum) AS 'Total Requests', sum(provider.cacheHitRate.average) AS 'Cache Hit Rate' FROM CloudFrontDistributionSample FACET `provider.distributionId` TIMESERIES 1 hour"
+      },
+      {
+        "id": "uc-cloudfront-origin-vs-cdn-latency",
+        "title": "Origin Latency vs CDN Latency Comparison",
+        "nrProduct": "Infrastructure Monitoring, Browser Monitoring",
+        "nrFeature": "CloudFront Monitoring, Real User Monitoring",
+        "customerPainPoint": "Users in certain regions are reporting slow load times but we can't tell if the issue is at the CloudFront edge, the origin server, or the user's last-mile connection — we're guessing at where to optimize.",
+        "pitchStatement": "New Relic correlates CloudFront origin latency metrics with real user monitoring data from the browser, so you can see for each geographic region whether slowness is origin-side (your problem) or CDN edge-side (a configuration or routing problem).",
+        "discoveryQuestion": "Can you currently compare the latency your CDN adds versus what your origin contributes — and do you know which geographic regions have the worst end-user experience?",
+        "nrqlExample": "SELECT average(provider.originLatency.average), average(provider.totalErrorRate.average) FROM CloudFrontDistributionSample FACET `provider.region` TIMESERIES 30 minutes"
+      },
+      {
+        "id": "uc-cloudfront-geo-error-distribution",
+        "title": "Geographic Error Distribution",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "CloudFront Monitoring, Geographic Dashboards",
+        "customerPainPoint": "We had an incident where CloudFront was returning errors only in specific regions — our global monitoring showed acceptable error rates because the problem was localized, and we missed it for hours.",
+        "pitchStatement": "New Relic breaks down CloudFront error rates by edge location and geographic region so localized CDN failures are immediately visible, not hidden in global averages — ensuring you catch regional degradation before it escalates.",
+        "discoveryQuestion": "During your last CDN incident, did you have visibility into which geographic regions or edge locations were affected — or were you relying on global aggregate metrics?",
+        "nrqlExample": "SELECT sum(provider.4xxErrorRate.average + provider.5xxErrorRate.average) AS 'Error Rate' FROM CloudFrontDistributionSample FACET `provider.distributionId` TIMESERIES 10 minutes"
+      },
+      {
+        "id": "uc-cloudfront-bandwidth-trending",
+        "title": "Bandwidth Consumption Trending",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "CloudFront Monitoring, Cost Dashboards",
+        "customerPainPoint": "Our CloudFront data transfer costs are unpredictable — we get surprised by the bill at the end of the month and have no way to forecast or attribute bandwidth to specific distributions or content types.",
+        "pitchStatement": "New Relic tracks CloudFront bytes transferred per distribution with trend analysis and alerting on unusual spikes, so you can forecast monthly costs, identify which distributions are driving consumption, and detect unexpected traffic surges before they become budget surprises.",
+        "discoveryQuestion": "How do you forecast your monthly CloudFront data transfer costs — do you have visibility into bandwidth trends per distribution that would let you project end-of-month spend?",
+        "nrqlExample": "SELECT sum(provider.bytesDownloaded.sum) / 1e9 AS 'GB Downloaded', sum(provider.bytesUploaded.sum) / 1e9 AS 'GB Uploaded' FROM CloudFrontDistributionSample FACET `provider.distributionId` TIMESERIES 1 day"
+      }
+    ],
+    "aws-route53": [
+      {
+        "id": "uc-route53-dns-query-latency",
+        "title": "DNS Query Latency by Resolver",
+        "nrProduct": "Infrastructure Monitoring, Synthetics",
+        "nrFeature": "Route 53 Monitoring, Synthetic Monitoring",
+        "customerPainPoint": "DNS resolution latency adds to our application response time but we have no visibility into it — slow DNS resolution in specific regions could be contributing to user experience issues we're attributing to our application.",
+        "pitchStatement": "New Relic monitors Route 53 resolver query latency and correlates it with synthetic monitoring from multiple global vantage points, so you can quantify DNS latency's contribution to total response time and identify resolver-specific issues by region.",
+        "discoveryQuestion": "Do you include DNS resolution time in your end-to-end latency measurements — and do you know which geographic regions have the highest DNS lookup times for your domains?",
+        "nrqlExample": "SELECT average(provider.dnsQueriesPerSecond.average) FROM Route53HealthCheckSample FACET `provider.domainName` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-route53-health-check-failure",
+        "title": "Health Check Failure Correlation with App Availability",
+        "nrProduct": "Infrastructure Monitoring, Synthetics",
+        "nrFeature": "Route 53 Health Checks, Alerts",
+        "customerPainPoint": "Route 53 health checks trigger DNS failover but we have no visibility into the sequence of events — did the health check accurately reflect a real outage, and did failover actually improve availability for users?",
+        "pitchStatement": "New Relic correlates Route 53 health check status changes with application availability data and synthetic monitoring results, giving you a timeline of exactly when a health check failed, when DNS failover occurred, and whether it resolved the user-facing impact.",
+        "discoveryQuestion": "When Route 53 last triggered a DNS failover, could you verify in real time that the failover improved user availability — or did you find out after the fact?",
+        "nrqlExample": "SELECT latest(provider.healthCheckStatus.average) AS 'Health Check Status', latest(provider.connectionTime.average) AS 'Connection Time ms' FROM Route53HealthCheckSample FACET `provider.healthCheckId` TIMESERIES 1 minute"
+      },
+      {
+        "id": "uc-route53-failover-detection",
+        "title": "DNS-Based Failover Event Detection",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "Route 53 Monitoring, Event Alerting",
+        "customerPainPoint": "DNS failover events happen silently and we only discover them when someone checks the Route 53 console — we have no automated alerting when traffic shifts from primary to secondary endpoints.",
+        "pitchStatement": "New Relic detects Route 53 health check state changes and failover events in real time, sending alerts the moment a DNS failover occurs so your on-call team knows immediately and can validate that secondary infrastructure is handling the load.",
+        "discoveryQuestion": "Do you have automated alerting for DNS failover events — would you know within 60 seconds if Route 53 switched traffic from your primary to your secondary endpoint?",
+        "nrqlExample": "SELECT count(*) FROM Route53HealthCheckSample WHERE provider.healthCheckStatus.average < 1 FACET `provider.healthCheckId` TIMESERIES 1 minute"
+      },
+      {
+        "id": "uc-route53-traffic-policy-impact",
+        "title": "Traffic Policy Change Impact Analysis",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "Route 53 Monitoring, Change Analysis",
+        "customerPainPoint": "We change Route 53 routing policies and weighted records regularly but we never know the actual impact on traffic distribution until we look at backend logs hours later — we can't validate changes are working as expected.",
+        "pitchStatement": "New Relic correlates Route 53 query volume changes with backend target health and application metrics so you can validate in real time that a routing policy change is distributing traffic as intended and not causing unexpected load on specific targets.",
+        "discoveryQuestion": "When you make changes to Route 53 weighted routing or geolocation policies, how do you validate that the change is having the intended effect on traffic distribution?",
+        "nrqlExample": "SELECT average(provider.childHealthCheckHealthyCount.average), average(provider.connectionTime.average) FROM Route53HealthCheckSample FACET `provider.healthCheckId` TIMESERIES 5 minutes"
+      }
+    ],
+    "aws-s3": [
+      {
+        "id": "uc-s3-request-error-rate",
+        "title": "Request Error Rate by Bucket and Operation",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "S3 Monitoring, Error Dashboards",
+        "customerPainPoint": "Our applications read and write to S3 and occasionally fail silently — we don't know if it's a permissions issue, a rate limit, or a service-side error until users report missing data.",
+        "pitchStatement": "New Relic monitors S3 request error rates broken down by bucket, operation type, and error code, alerting you when error rates exceed normal baselines so you can diagnose whether it's a permission boundary, a throttle, or an S3 service issue.",
+        "discoveryQuestion": "Do you have visibility into S3 request error rates by bucket and operation — and do you know which operations are failing most frequently in your environment?",
+        "nrqlExample": "SELECT sum(provider.4xxErrors.sum), sum(provider.5xxErrors.sum), average(provider.totalRequestLatency.average) FROM S3BucketSample FACET `provider.bucketName` TIMESERIES 1 hour"
+      },
+      {
+        "id": "uc-s3-storage-growth",
+        "title": "Storage Growth and Cost Projection",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "S3 Monitoring, Cost Dashboards",
+        "customerPainPoint": "Our S3 storage costs keep climbing and we can't identify which buckets are growing fastest or project future costs — we react to the bill instead of managing storage proactively.",
+        "pitchStatement": "New Relic tracks S3 bucket size and object count over time with trend analysis and cost projection, so you can identify the fastest-growing buckets, validate that lifecycle policies are working, and forecast monthly storage costs before they arrive.",
+        "discoveryQuestion": "Do you know which S3 buckets are growing the fastest in your account — and can you project what your storage costs will look like in 3 months if growth continues at the current rate?",
+        "nrqlExample": "SELECT latest(provider.bucketSizeBytes.average) / 1e9 AS 'Size GB', latest(provider.numberOfObjects.average) AS 'Object Count' FROM S3BucketSample FACET `provider.bucketName` SINCE 1 month ago TIMESERIES 1 day"
+      },
+      {
+        "id": "uc-s3-replication-failure",
+        "title": "Replication Failure Detection",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "S3 Monitoring, Alerts",
+        "customerPainPoint": "We rely on S3 cross-region replication for disaster recovery, but we have no visibility into replication health — if replication falls behind or fails, we won't know until we try to use the replica in a DR scenario.",
+        "pitchStatement": "New Relic monitors S3 replication latency and failure metrics, alerting you when replication lag exceeds your RPO threshold or when objects fail to replicate — ensuring your DR bucket is always in a known, validated state.",
+        "discoveryQuestion": "Do you have monitoring on your S3 cross-region replication — do you know the current replication lag and whether any objects have failed to replicate?",
+        "nrqlExample": "SELECT sum(provider.replicationLatency.average) AS 'Avg Replication Lag (ms)', sum(provider.bytesReplicated.sum) AS 'Bytes Replicated' FROM S3BucketSample WHERE provider.replicationLatency.average IS NOT NULL FACET `provider.bucketName` TIMESERIES 1 hour"
+      },
+      {
+        "id": "uc-s3-lifecycle-effectiveness",
+        "title": "Lifecycle Policy Effectiveness",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "S3 Monitoring, Cost Dashboards",
+        "customerPainPoint": "We have S3 lifecycle policies to transition old data to cheaper storage tiers, but we have no visibility into whether they're actually running and moving objects as configured — we're potentially paying for objects that should have been tiered or deleted.",
+        "pitchStatement": "New Relic tracks S3 object counts by storage class over time so you can validate that lifecycle policies are transitioning objects from Standard to Infrequent Access or Glacier as configured, and quantify the cost savings your policies are actually delivering.",
+        "discoveryQuestion": "Do you have evidence that your S3 lifecycle policies are executing as configured — can you show that object counts in Standard storage are decreasing as they should be transitioned to cheaper tiers?",
+        "nrqlExample": "SELECT latest(provider.numberOfObjects.average) AS 'Objects', latest(provider.bucketSizeBytes.average) / 1e9 AS 'Size GB' FROM S3BucketSample FACET `provider.bucketName`, `provider.storageType` SINCE 1 week ago"
+      }
+    ],
+    "aws-efs": [
+      {
+        "id": "uc-efs-burst-credit-depletion",
+        "title": "Burst Credit Depletion Alerting",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "EFS Monitoring, Alerts",
+        "customerPainPoint": "Our EFS file system degrades to the baseline throughput when burst credits run out, but we never know it's happening until applications start reporting slow file operations — by then productivity is already impacted.",
+        "pitchStatement": "New Relic monitors EFS burst credit balance and alerts you when credits are depleting toward the baseline threshold, giving you time to either reduce workload, switch to provisioned throughput mode, or scale to a larger file system before performance degrades.",
+        "discoveryQuestion": "Do you have alerting on your EFS burst credit balance — and do you know what your baseline throughput would be if your credits were exhausted right now?",
+        "nrqlExample": "SELECT latest(provider.burstCreditBalance.average) AS 'Burst Credits', average(provider.dataWriteIOBytes.average + provider.dataReadIOBytes.average) / 1e6 AS 'Throughput MB/s' FROM EfsSample FACET `provider.fileSystemId` TIMESERIES 30 minutes"
+      },
+      {
+        "id": "uc-efs-throughput-utilization",
+        "title": "Throughput Utilization Against Provisioned Limits",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "EFS Monitoring, Capacity Dashboards",
+        "customerPainPoint": "We provisioned EFS throughput based on peak estimates, but we don't know if we're over- or under-provisioned — we could be paying for unused throughput or throttling under actual load.",
+        "pitchStatement": "New Relic tracks EFS actual throughput consumption against your provisioned limit, showing utilization percentage over time so you can right-size provisioned throughput based on real usage patterns rather than estimates.",
+        "discoveryQuestion": "Do you know what percentage of your provisioned EFS throughput you're actually consuming at peak — and have you validated that your provisioned capacity matches your real workload requirements?",
+        "nrqlExample": "SELECT average(provider.permittedThroughput.average) / 1e6 AS 'Permitted Throughput MB/s', average(provider.meteredIOBytes.average) / 1e6 AS 'Actual Throughput MB/s' FROM EfsSample FACET `provider.fileSystemId` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-efs-iops-saturation",
+        "title": "IOPS Saturation Detection",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "EFS Monitoring, Alerts",
+        "customerPainPoint": "Workloads on EFS slow down periodically and we suspect IOPS limits but have no data — we can't correlate application latency spikes with EFS IOPS saturation to confirm the hypothesis.",
+        "pitchStatement": "New Relic captures EFS read and write IOPS metrics at one-minute granularity and correlates them with application-level response time, confirming whether IOPS saturation is the root cause of application latency and giving you the data to justify a throughput mode change.",
+        "discoveryQuestion": "When your EFS-backed workloads experience latency spikes, can you quickly determine whether IOPS limits are being hit — or does diagnosing EFS-related performance issues take hours?",
+        "nrqlExample": "SELECT average(provider.dataReadIOBytes.sum / 4096) AS 'Read IOPS', average(provider.dataWriteIOBytes.sum / 4096) AS 'Write IOPS' FROM EfsSample FACET `provider.fileSystemId` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-efs-client-connections",
+        "title": "Client Connection Count Monitoring",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "EFS Monitoring",
+        "customerPainPoint": "We don't know how many clients are connected to our EFS file systems at any given time — unexpected connection spikes could indicate misconfigured workloads mounting EFS when they shouldn't be.",
+        "pitchStatement": "New Relic tracks EFS client connection counts over time, alerting you when connections spike unexpectedly so you can identify misconfigured workloads, unauthorized mounts, or connection leaks before they consume throughput resources.",
+        "discoveryQuestion": "Do you know how many clients are currently connected to each of your EFS file systems — and would you be alerted if a new workload started mounting EFS unexpectedly?",
+        "nrqlExample": "SELECT latest(provider.clientConnections.average) AS 'Connected Clients' FROM EfsSample FACET `provider.fileSystemId` TIMESERIES 10 minutes"
+      }
+    ],
+    "aws-kinesis": [
+      {
+        "id": "uc-kinesis-consumer-lag",
+        "title": "Consumer Lag Detection and Alerting",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "Kinesis Monitoring, Alerts",
+        "customerPainPoint": "Our Kinesis consumers fall behind during traffic spikes and we end up processing stale data — by the time we notice the lag, we're already hours behind and downstream systems are acting on outdated information.",
+        "pitchStatement": "New Relic monitors Kinesis consumer lag in real time and alerts when the gap between record timestamp and processing timestamp exceeds your SLO, giving your team time to scale consumers or investigate bottlenecks before stale data impacts downstream systems.",
+        "discoveryQuestion": "Do you have real-time visibility into Kinesis consumer lag — and do you have a defined SLO for how far behind consumers are allowed to fall before it becomes a problem?",
+        "nrqlExample": "SELECT average(provider.getRecords.iteratorAgeMilliseconds.maximum) / 1000 AS 'Consumer Lag (seconds)' FROM KinesisStreamSample FACET `provider.streamName` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-kinesis-shard-utilization",
+        "title": "Shard Utilization and Hot Shard Identification",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "Kinesis Monitoring, Dashboards",
+        "customerPainPoint": "We're paying for provisioned Kinesis shards but don't know if we're using them evenly — hot shards throttle while others sit idle, and we have no visibility into which partition keys are causing the imbalance.",
+        "pitchStatement": "New Relic tracks write throughput and record counts per Kinesis shard, identifying hot shards where throughput is concentrated so you can rebalance partition key distribution and avoid throttling without over-provisioning shards.",
+        "discoveryQuestion": "Do you have per-shard visibility in your Kinesis streams — and have you ever experienced throttling on some shards while others were underutilized?",
+        "nrqlExample": "SELECT sum(provider.putRecords.bytes.sum) / 1e6 AS 'MB Written', sum(provider.putRecords.records.sum) AS 'Records Written' FROM KinesisStreamSample FACET `provider.streamName`, `provider.shardId` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-kinesis-get-records-throttle",
+        "title": "GetRecords Throttle Rate Monitoring",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "Kinesis Monitoring, Alerts",
+        "customerPainPoint": "Our Kinesis consumers get throttled on GetRecords calls but we only notice when consumer lag is already high — we don't have early warning that throttling is starting to accumulate.",
+        "pitchStatement": "New Relic monitors Kinesis GetRecords throttle rate per shard and alerts you when throttling starts, so you can add consumer instances, optimize polling frequency, or reshard the stream before lag builds to unacceptable levels.",
+        "discoveryQuestion": "Do you monitor GetRecords throttling on your Kinesis streams — and do you know how often your consumers are being throttled right now?",
+        "nrqlExample": "SELECT sum(provider.getRecords.throttledRecordsCount.sum) AS 'Throttled Records', sum(provider.getRecords.successfulRecords.sum) AS 'Successful Records' FROM KinesisStreamSample FACET `provider.streamName` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-kinesis-data-freshness-slo",
+        "title": "Data Freshness SLO Tracking",
+        "nrProduct": "Infrastructure Monitoring, Service Level Management",
+        "nrFeature": "Kinesis Monitoring, SLO Dashboards",
+        "customerPainPoint": "Our downstream analytics and ML models depend on fresh data from Kinesis, but we have no formal SLO on data freshness — when the pipeline is slow, nobody knows if it's within acceptable bounds or a real problem.",
+        "pitchStatement": "New Relic lets you define a data freshness SLO against your Kinesis iterator age metric, tracking SLO compliance over rolling 7-day and 30-day windows so stakeholders have a clear, contractual definition of acceptable pipeline latency.",
+        "discoveryQuestion": "Do you have a defined SLO for how fresh your Kinesis data needs to be when it reaches downstream consumers — and can you measure SLO compliance over a monthly window?",
+        "nrqlExample": "SELECT percentage(count(*), WHERE provider.getRecords.iteratorAgeMilliseconds.maximum < 60000) AS 'Freshness SLO Compliance %' FROM KinesisStreamSample FACET `provider.streamName` TIMESERIES 1 day"
+      }
+    ],
+    "aws-sqs": [
+      {
+        "id": "uc-sqs-queue-depth-age",
+        "title": "Queue Depth and Message Age Alerting",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "SQS Monitoring, Alerts",
+        "customerPainPoint": "Our SQS queues back up silently when consumers are slow or down — messages age out and expire without being processed, resulting in data loss that we don't discover until a downstream system reports missing records.",
+        "pitchStatement": "New Relic monitors SQS queue depth and oldest message age in real time, alerting you when message age approaches your message retention period or when queue depth spikes beyond normal capacity — before messages expire and data is lost.",
+        "discoveryQuestion": "Do you have alerting on the age of the oldest message in your SQS queues — and do you know how close to your retention period your oldest unprocessed messages have been?",
+        "nrqlExample": "SELECT latest(provider.approximateNumberOfMessagesVisible.average) AS 'Queue Depth', latest(provider.approximateAgeOfOldestMessage.average) AS 'Oldest Message Age (s)' FROM SqsQueueSample FACET `provider.queueName` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-sqs-dlq-fill-rate",
+        "title": "Dead-Letter Queue Fill Rate Monitoring",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "SQS Monitoring, Alerts",
+        "customerPainPoint": "Messages flow into our dead-letter queues when processing fails, but we only check DLQ depth periodically — by the time we look, we have thousands of failed messages and no idea when the failures started.",
+        "pitchStatement": "New Relic monitors DLQ message count in real time and alerts the moment messages start arriving, giving you immediate visibility into when processing failures began so you can correlate with deployments or downstream changes and fix the root cause quickly.",
+        "discoveryQuestion": "Do you have real-time alerting on your SQS dead-letter queues — do you know within minutes when messages start flowing into a DLQ?",
+        "nrqlExample": "SELECT latest(provider.approximateNumberOfMessagesVisible.average) AS 'DLQ Depth' FROM SqsQueueSample WHERE `provider.queueName` LIKE '%-dlq%' OR `provider.queueName` LIKE '%-dead%' FACET `provider.queueName` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-sqs-consumer-producer-rate",
+        "title": "Consumer Processing Rate vs Producer Rate",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "SQS Monitoring, Dashboards",
+        "customerPainPoint": "We don't know if our SQS consumers are keeping up with producers — queue depth grows slowly and we don't notice we're falling behind until the queue has accumulated hours of backlog.",
+        "pitchStatement": "New Relic computes the ratio of messages sent versus messages received in your SQS queues, surfacing in real time whether consumers are keeping pace with producers and projecting how long before backlog accumulates to an unacceptable level.",
+        "discoveryQuestion": "Can you see whether your SQS consumers are currently keeping up with your producers — do you track the ratio of messages sent versus messages deleted per unit time?",
+        "nrqlExample": "SELECT sum(provider.numberOfMessagesSent.sum) AS 'Messages Sent', sum(provider.numberOfMessagesDeleted.sum) AS 'Messages Deleted' FROM SqsQueueSample FACET `provider.queueName` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-sqs-visibility-timeout-tuning",
+        "title": "Visibility Timeout Tuning Insights",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "SQS Monitoring",
+        "customerPainPoint": "Messages in our SQS queues are being processed multiple times because consumers are taking longer than the visibility timeout — we're creating duplicate processing issues that cause data inconsistencies, but we can't quantify how often it happens.",
+        "pitchStatement": "New Relic correlates the number of messages not deleted (indicating processing failure or timeout expiry) with consumer processing latency, giving you data to tune your visibility timeout to match actual processing time and eliminate duplicate delivery issues.",
+        "discoveryQuestion": "Have you experienced duplicate message processing in your SQS consumers — and do you know how your average consumer processing time compares to your configured visibility timeout?",
+        "nrqlExample": "SELECT sum(provider.numberOfMessagesNotVisible.average) AS 'In-Flight Messages', sum(provider.numberOfMessagesSent.sum) - sum(provider.numberOfMessagesDeleted.sum) AS 'Unprocessed Messages' FROM SqsQueueSample FACET `provider.queueName` TIMESERIES 5 minutes"
+      }
+    ],
+    "aws-sns": [
+      {
+        "id": "uc-sns-delivery-failure-rate",
+        "title": "Message Delivery Failure Rate by Subscription",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "SNS Monitoring, Alerts",
+        "customerPainPoint": "SNS notifications fail silently for specific subscribers — an HTTPS endpoint goes down or an SQS queue fills up and SNS stops delivering, but we have no visibility into delivery failures until downstream systems report missing events.",
+        "pitchStatement": "New Relic monitors SNS delivery failure rates per subscription endpoint and alerts you when failure rates exceed a threshold, identifying which specific subscribers are failing to receive messages so you can remediate before critical notifications are permanently lost.",
+        "discoveryQuestion": "Do you have visibility into which SNS subscriptions are experiencing delivery failures — and would you know within minutes if a critical subscriber stopped receiving messages?",
+        "nrqlExample": "SELECT sum(provider.numberOfNotificationsFailed.sum) AS 'Failed Deliveries', sum(provider.numberOfNotificationsDelivered.sum) AS 'Successful Deliveries' FROM SnsSample FACET `provider.topicName` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-sns-sms-delivery-rate",
+        "title": "SMS Delivery Success Rate by Region",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "SNS Monitoring, Geographic Dashboards",
+        "customerPainPoint": "We use SNS for SMS notifications in our application and users in certain countries report not receiving messages — we have no visibility into SMS delivery rates by region to identify carrier-specific or regional delivery issues.",
+        "pitchStatement": "New Relic tracks SNS SMS delivery success rates broken down by destination region and carrier, so you can identify geographic patterns in delivery failures and take targeted action — whether that's switching SMS providers for specific regions or debugging message content issues.",
+        "discoveryQuestion": "Do you have visibility into SNS SMS delivery rates by country or region — and do you know which regions have the lowest delivery success rates for your notifications?",
+        "nrqlExample": "SELECT sum(provider.numberOfNotificationsDelivered.sum) AS 'Delivered', sum(provider.numberOfNotificationsFailed.sum) AS 'Failed' FROM SnsSample WHERE `provider.protocol` = 'sms' FACET `provider.topicName` TIMESERIES 1 hour"
+      },
+      {
+        "id": "uc-sns-https-delivery-latency",
+        "title": "HTTPS Endpoint Delivery Latency",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "SNS Monitoring",
+        "customerPainPoint": "Our event-driven architecture relies on SNS delivering to HTTPS endpoints, and slow endpoint response times cause SNS to retry and back off — we end up with delayed event processing but can't tell if it's SNS or the endpoint.",
+        "pitchStatement": "New Relic surfaces SNS delivery attempt latency to HTTPS endpoints, correlating delivery retries with endpoint response time metrics so you can determine whether SNS delivery delays are caused by endpoint slowness, network issues, or SNS-side throttling.",
+        "discoveryQuestion": "Do you monitor the delivery latency from SNS to your HTTPS subscriber endpoints — and do you know how often SNS retries delivery due to slow endpoint responses?",
+        "nrqlExample": "SELECT average(provider.numberOfNotificationsDelivered.sum), average(provider.numberOfNotificationsFailed.sum) FROM SnsSample FACET `provider.topicName`, `provider.subscriptionProtocol` TIMESERIES 10 minutes"
+      },
+      {
+        "id": "uc-sns-subscription-health",
+        "title": "Subscription Health Monitoring",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "SNS Monitoring, Alerts",
+        "customerPainPoint": "SNS topics accumulate dead subscriptions when HTTPS endpoints are decommissioned or SQS queues are deleted — we're publishing messages that nobody receives and wasting resources without knowing it.",
+        "pitchStatement": "New Relic monitors SNS publish rates versus delivery rates per topic, flagging topics where published messages are not being delivered to any subscriber — helping you identify orphaned topics, dead subscriptions, and misconfigured delivery pipelines.",
+        "discoveryQuestion": "Do you audit your SNS topics periodically to verify all subscriptions are active and receiving messages — and do you have automated alerting when delivery rates drop unexpectedly?",
+        "nrqlExample": "SELECT sum(provider.numberOfMessagesPublished.sum) AS 'Published', sum(provider.numberOfNotificationsDelivered.sum) AS 'Delivered', sum(provider.numberOfNotificationsFailed.sum) AS 'Failed' FROM SnsSample FACET `provider.topicName` TIMESERIES 1 hour"
+      }
+    ],
+    "aws-msk": [
+      {
+        "id": "uc-msk-consumer-group-lag",
+        "title": "Consumer Group Lag Tracking",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "MSK Monitoring, Alerts",
+        "customerPainPoint": "Kafka consumer groups fall behind during traffic spikes and we only notice when downstream systems start processing stale data — by then the lag has been accumulating for hours and we have a real-time data freshness problem.",
+        "pitchStatement": "New Relic tracks consumer group lag per topic partition in real time and alerts when lag exceeds your SLO, giving your streaming team time to scale consumers or investigate bottlenecks before stale data reaches downstream analytics or operational systems.",
+        "discoveryQuestion": "Do you have real-time alerting on Kafka consumer group lag in your MSK cluster — and do you have a defined maximum acceptable lag before it impacts your downstream systems?",
+        "nrqlExample": "SELECT average(provider.consumerGroupLag.value) AS 'Consumer Lag' FROM AwsMskBrokerSample FACET `provider.clusterName`, `provider.consumerGroup` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-msk-broker-disk-utilization",
+        "title": "Broker Disk Utilization Alerting",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "MSK Monitoring, Alerts",
+        "customerPainPoint": "MSK broker disks fill up when retention is too long or production rates increase unexpectedly — a full disk causes the broker to stop accepting writes, which immediately impacts all producers and causes data loss.",
+        "pitchStatement": "New Relic monitors MSK broker disk utilization with predictive alerting, projecting when disks will fill based on current growth rate so you can reduce retention, increase broker storage, or scale the cluster before writes are rejected.",
+        "discoveryQuestion": "Do you have alerting on MSK broker disk utilization — and do you know how quickly your Kafka topic retention is consuming storage at your current production rate?",
+        "nrqlExample": "SELECT average(provider.kafkaDataLogsDiskUsed.average) / 1e9 AS 'Disk Used GB', average(provider.rootDiskUsed.average) AS 'Root Disk %' FROM AwsMskBrokerSample FACET `provider.clusterName`, `provider.brokerId` TIMESERIES 1 hour"
+      },
+      {
+        "id": "uc-msk-under-replicated-partitions",
+        "title": "Under-Replicated Partition Detection",
+        "nrProduct": "Infrastructure Monitoring",
+        "nrFeature": "MSK Monitoring, Alerts",
+        "customerPainPoint": "Under-replicated partitions in Kafka mean we're at risk of data loss if a broker fails — but we have no automated alerting when replication falls behind and we only check partition health manually during weekly reviews.",
+        "pitchStatement": "New Relic monitors the under-replicated partition count across all MSK brokers and alerts the moment any partition falls below the replication factor, so your team can investigate broker health and restore replication before a broker failure results in data loss.",
+        "discoveryQuestion": "Do you have automated alerting on under-replicated partitions in your MSK cluster — and how quickly would you know if a broker failure was about to cause data loss?",
+        "nrqlExample": "SELECT latest(provider.underReplicatedPartitions.value) AS 'Under-Replicated Partitions' FROM AwsMskBrokerSample FACET `provider.clusterName`, `provider.brokerId` TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-msk-producer-consumer-throughput",
+        "title": "Producer and Consumer Throughput Correlation",
+        "nrProduct": "Infrastructure Monitoring, APM",
+        "nrFeature": "MSK Monitoring, Dashboards",
+        "customerPainPoint": "We have producers and consumers running across multiple services and we can't correlate throughput end-to-end — when lag builds up we can't tell if producers are sending too much or consumers are processing too slowly.",
+        "pitchStatement": "New Relic correlates MSK producer bytes-in with consumer bytes-out per topic in a single view, making it immediately visible whether lag is being driven by a producer throughput spike or a consumer processing bottleneck — so you scale the right side of the pipeline.",
+        "discoveryQuestion": "When you experience Kafka consumer lag, can you quickly determine whether the root cause is increased producer throughput or decreased consumer processing speed?",
+        "nrqlExample": "SELECT average(provider.bytesInPerSec.average) AS 'Producer Throughput MB/s', average(provider.bytesOutPerSec.average) AS 'Consumer Throughput MB/s' FROM AwsMskBrokerSample FACET `provider.clusterName` TIMESERIES 5 minutes"
+      }
+    ],
+    "aws-waf": [
+      {
+        "id": "uc-waf-blocked-ip-analysis",
+        "title": "Top Blocked IP and Country Analysis",
+        "nrProduct": "Log Management, Security",
+        "nrFeature": "WAF Log Analysis, Security Dashboards",
+        "customerPainPoint": "WAF is blocking requests but we have no visibility into who is attacking us — we can't see if it's a distributed attack from many IPs or a concentrated source, and we can't tell if our rules are effective or creating false positives.",
+        "pitchStatement": "New Relic ingests WAF logs and builds real-time dashboards showing top blocked IPs, source countries, and attack vectors so your security team can identify whether an attack is distributed or concentrated and tune WAF rules to be more precise.",
+        "discoveryQuestion": "Do you have visibility into which IP addresses and countries are being blocked by WAF right now — and do you know whether your WAF rules are causing any false positives for legitimate users?",
+        "nrqlExample": "SELECT count(*) AS 'Blocked Requests' FROM Log WHERE logtype = 'aws-waf' AND action = 'BLOCK' FACET httpRequest.clientIp, httpRequest.country SINCE 24 hours ago LIMIT 20"
+      },
+      {
+        "id": "uc-waf-attack-pattern-trending",
+        "title": "Attack Pattern Trending (SQL Injection, XSS, etc.)",
+        "nrProduct": "Log Management, Security",
+        "nrFeature": "WAF Log Analysis, Threat Intelligence",
+        "customerPainPoint": "We know WAF is catching attacks but we have no trending data on what attack types are increasing — we can't tell if we're seeing more SQL injection attempts this month than last month or if a new attack vector is emerging.",
+        "pitchStatement": "New Relic analyzes WAF logs to trend attack types over time — SQL injection, XSS, path traversal, rate-based rules — so your security team can see which attack vectors are growing, prioritize rule tuning, and demonstrate security posture improvement to stakeholders.",
+        "discoveryQuestion": "Do you have trend data on the types of attacks your WAF is blocking — can you show whether SQL injection or XSS attempts have increased or decreased over the past month?",
+        "nrqlExample": "SELECT count(*) FROM Log WHERE logtype = 'aws-waf' AND action = 'BLOCK' FACET terminatingRuleId, httpRequest.uri SINCE 7 days ago TIMESERIES 1 day"
+      },
+      {
+        "id": "uc-waf-rule-effectiveness",
+        "title": "Rule Effectiveness: Allowed vs Blocked Request Ratio",
+        "nrProduct": "Log Management, Security",
+        "nrFeature": "WAF Log Analysis, Security Dashboards",
+        "customerPainPoint": "We have WAF rules deployed but no way to measure their effectiveness — we don't know if rules are blocking malicious traffic at the right rate or if we have misconfigured rules that are either too permissive or blocking legitimate users.",
+        "pitchStatement": "New Relic analyzes WAF logs to compute the block rate per rule, identifying rules that are blocking high volumes of traffic (potential false positives) and rules that never fire (potentially redundant), giving your team data to continuously optimize your WAF configuration.",
+        "discoveryQuestion": "Can you measure the effectiveness of individual WAF rules — do you know which rules are blocking the most traffic and whether any rules have never been triggered?",
+        "nrqlExample": "SELECT count(*) AS 'Request Count' FROM Log WHERE logtype = 'aws-waf' FACET action, terminatingRuleId SINCE 24 hours ago"
+      },
+      {
+        "id": "uc-waf-rate-limit-triggers",
+        "title": "Rate Limit Trigger Frequency",
+        "nrProduct": "Log Management, Security",
+        "nrFeature": "WAF Log Analysis, Alerts",
+        "customerPainPoint": "Our WAF rate-limiting rules trigger occasionally but we can't tell if it's legitimate high-traffic events or actual DDoS attempts — we're either too aggressive and blocking real users or too permissive and absorbing bot traffic.",
+        "pitchStatement": "New Relic tracks WAF rate-based rule trigger frequency over time, correlating rate limit events with application traffic volume so you can distinguish between traffic spikes from real users and bot-driven rate limit triggers — and tune your rate limit thresholds accordingly.",
+        "discoveryQuestion": "Do you have visibility into how often your WAF rate-limiting rules are triggered — and can you tell whether the rate-limited IPs are bots or legitimate high-volume users?",
+        "nrqlExample": "SELECT count(*) AS 'Rate Limited Requests' FROM Log WHERE logtype = 'aws-waf' AND action = 'BLOCK' AND terminatingRuleType = 'RATE_BASED' FACET httpRequest.clientIp TIMESERIES 5 minutes SINCE 24 hours ago"
+      }
+    ],
+    "aws-cloudtrail": [
+      {
+        "id": "uc-cloudtrail-iam-role-assumption",
+        "title": "Unusual IAM Role Assumption Detection",
+        "nrProduct": "Log Management, Security",
+        "nrFeature": "CloudTrail Log Analysis, Anomaly Detection",
+        "customerPainPoint": "We have hundreds of IAM roles in use and no baseline of normal role assumption patterns — a compromised credential assuming a sensitive role could go undetected for days until the damage is already done.",
+        "pitchStatement": "New Relic ingests CloudTrail logs and baselines normal IAM role assumption patterns per principal and time of day, alerting your security team when an unusual role assumption occurs — different time, different source IP, or first-ever assumption of a sensitive role.",
+        "discoveryQuestion": "Do you have automated detection for unusual IAM role assumption events — specifically, would you be alerted if a service role was assumed from an unexpected IP or at an unusual time?",
+        "nrqlExample": "SELECT count(*) FROM Log WHERE logtype = 'cloudtrail' AND eventName = 'AssumeRole' FACET userIdentity.arn, requestParameters.roleArn, sourceIPAddress SINCE 24 hours ago LIMIT 20"
+      },
+      {
+        "id": "uc-cloudtrail-root-account-usage",
+        "title": "Root Account Usage Alerting",
+        "nrProduct": "Log Management, Security",
+        "nrFeature": "CloudTrail Log Analysis, Alerts",
+        "customerPainPoint": "AWS root account usage is a major security risk but we have no automated alerting — if someone uses the root account for any operation, we might not find out until our next audit.",
+        "pitchStatement": "New Relic monitors CloudTrail logs for any root account activity and fires an immediate alert the moment the root account is used, giving your security team real-time notification to investigate whether the use was authorized or indicative of a compromise.",
+        "discoveryQuestion": "Do you have real-time alerting on AWS root account usage — and when was the last time your root account was used for any operation in your environment?",
+        "nrqlExample": "SELECT count(*) AS 'Root Account Actions' FROM Log WHERE logtype = 'cloudtrail' AND userIdentity.type = 'Root' FACET eventName, sourceIPAddress, awsRegion SINCE 7 days ago"
+      },
+      {
+        "id": "uc-cloudtrail-resource-audit-trail",
+        "title": "Resource Creation and Deletion Audit Trail",
+        "nrProduct": "Log Management",
+        "nrFeature": "CloudTrail Log Analysis, Compliance Dashboards",
+        "customerPainPoint": "When a resource is accidentally deleted or misconfigured in AWS, we spend hours digging through CloudTrail console trying to find who made the change — there's no easy way to search and correlate events across accounts and regions.",
+        "pitchStatement": "New Relic provides a centralized, searchable audit trail of all AWS resource creation and deletion events across accounts and regions, so you can find in seconds who deleted a security group or created a new S3 bucket — with full request context including source IP and assumed role.",
+        "discoveryQuestion": "When a production resource is accidentally deleted or misconfigured, how long does it take your team to identify who made the change and what the change was?",
+        "nrqlExample": "SELECT eventName, userIdentity.arn, sourceIPAddress, awsRegion, requestParameters FROM Log WHERE logtype = 'cloudtrail' AND eventName IN ('DeleteBucket', 'DeleteSecurityGroup', 'DeleteSubnet', 'TerminateInstances') SINCE 24 hours ago LIMIT 50"
+      },
+      {
+        "id": "uc-cloudtrail-failed-auth-trending",
+        "title": "Failed Authentication Attempt Trending",
+        "nrProduct": "Log Management, Security",
+        "nrFeature": "CloudTrail Log Analysis, Security Dashboards",
+        "customerPainPoint": "We don't have visibility into failed AWS authentication attempts — a brute force attack on our IAM credentials or a misconfigured application repeatedly failing to authenticate could be happening right now and we'd have no idea.",
+        "pitchStatement": "New Relic analyzes CloudTrail for failed authentication events — Console login failures, expired token errors, and unauthorized API calls — trending them over time and alerting when failure rates spike, giving your security team early warning of credential attacks or application misconfigurations.",
+        "discoveryQuestion": "Do you monitor failed authentication attempts against your AWS accounts — and would you be alerted if one principal started generating hundreds of authentication failures in a short window?",
+        "nrqlExample": "SELECT count(*) AS 'Failed Auth Attempts' FROM Log WHERE logtype = 'cloudtrail' AND errorCode IN ('AccessDenied', 'AuthFailure', 'InvalidClientTokenId', 'UnauthorizedOperation') FACET userIdentity.arn, sourceIPAddress TIMESERIES 1 hour SINCE 24 hours ago"
+      }
+    ],
+    "aws-inspector": [
+      {
+        "id": "uc-inspector-critical-vuln-count",
+        "title": "Critical Vulnerability Count by Workload",
+        "nrProduct": "Log Management, Security",
+        "nrFeature": "Inspector Findings Integration, Security Dashboards",
+        "customerPainPoint": "AWS Inspector generates hundreds of findings but they're siloed in the Inspector console — we have no way to correlate vulnerabilities with the business-critical workloads they affect or prioritize remediation based on actual exposure.",
+        "pitchStatement": "New Relic ingests Inspector findings and lets you filter, sort, and dashboard critical and high severity CVEs by workload, application team, or environment tag — so security teams can present a prioritized remediation list to engineering teams in the context of business impact.",
+        "discoveryQuestion": "Can you currently show how many critical vulnerabilities exist per workload or application team — and do engineering teams have a prioritized list of what to fix first?",
+        "nrqlExample": "SELECT count(*) AS 'Findings' FROM Log WHERE logtype = 'aws-inspector' FACET severity, findingType, resourceTags.environment WHERE severity IN ('CRITICAL', 'HIGH') SINCE 7 days ago"
+      },
+      {
+        "id": "uc-inspector-vulnerability-trend",
+        "title": "Vulnerability Trend Over Time (Improving or Worsening)",
+        "nrProduct": "Log Management, Security",
+        "nrFeature": "Inspector Findings Integration, Trend Analysis",
+        "customerPainPoint": "We run Inspector scans but have no way to show whether our vulnerability posture is improving or getting worse over time — the security team can't demonstrate ROI or identify teams that are falling behind on remediation.",
+        "pitchStatement": "New Relic tracks Inspector finding counts over time by severity, giving your CISO a clear trend line showing whether critical vulnerabilities are being remediated faster than new ones are discovered — and which teams or workloads are improving versus regressing.",
+        "discoveryQuestion": "Can you show your CISO a trend of whether your overall vulnerability count is going up or down over the last 90 days — and which business units are driving the trend?",
+        "nrqlExample": "SELECT count(*) AS 'Active Findings' FROM Log WHERE logtype = 'aws-inspector' AND status = 'ACTIVE' FACET severity TIMESERIES 1 day SINCE 90 days ago"
+      },
+      {
+        "id": "uc-inspector-cvss-distribution",
+        "title": "CVSS Score Distribution Across Your Fleet",
+        "nrProduct": "Log Management, Security",
+        "nrFeature": "Inspector Findings Integration, Security Dashboards",
+        "customerPainPoint": "We know we have vulnerabilities but the risk distribution is unclear — are most of them low-severity noise or do we have a significant concentration of high-CVSS vulnerabilities that need immediate attention?",
+        "pitchStatement": "New Relic visualizes the CVSS score distribution across your entire AWS fleet, showing you the shape of your risk exposure — whether you have a long tail of low-severity findings or a concerning concentration of 9+ CVSS scores that require emergency patching.",
+        "discoveryQuestion": "Do you have a clear picture of your CVSS score distribution across your AWS workloads — and do you know how many 9.0+ CVSS vulnerabilities are currently active in your environment?",
+        "nrqlExample": "SELECT count(*) AS 'Findings' FROM Log WHERE logtype = 'aws-inspector' AND inspectorScore IS NOT NULL FACET cases(WHERE inspectorScore >= 9 AS 'Critical 9+', WHERE inspectorScore >= 7 AS 'High 7-9', WHERE inspectorScore >= 4 AS 'Medium 4-7', WHERE inspectorScore < 4 AS 'Low <4') SINCE 30 days ago"
+      },
+      {
+        "id": "uc-inspector-remediation-prioritization",
+        "title": "Remediation Prioritization by Exposure Risk",
+        "nrProduct": "Log Management, Security",
+        "nrFeature": "Inspector Findings Integration, Security Dashboards",
+        "customerPainPoint": "Our security team produces a list of CVEs to remediate but engineering teams push back because they don't understand the business risk — without context on exploitability and internet exposure, everything feels equally urgent and nothing gets prioritized.",
+        "pitchStatement": "New Relic correlates Inspector CVE findings with resource metadata — internet-facing vs. internal, production vs. non-production, exploitability score — to produce a risk-ranked remediation queue that engineering teams can act on with clear business context.",
+        "discoveryQuestion": "When you present vulnerability findings to engineering teams, do you have a way to rank them by actual business risk — combining CVSS score, exploitability, and whether the resource is internet-facing?",
+        "nrqlExample": "SELECT count(*) AS 'Critical Internet-Facing Findings' FROM Log WHERE logtype = 'aws-inspector' AND severity = 'CRITICAL' AND resourceTags.exposure = 'internet-facing' FACET packageVulnerabilityDetails.cvss.source, title SINCE 30 days ago LIMIT 20"
+      }
+    ],
+    "aws-cloudwatch": [
+      {
+        "id": "uc-cloudwatch-unified-dashboard",
+        "title": "Unified AWS and Application Metrics in a Single Dashboard",
+        "nrProduct": "Infrastructure Monitoring, Dashboards",
+        "nrFeature": "CloudWatch Metric Streams, Custom Dashboards",
+        "customerPainPoint": "We have AWS infrastructure metrics in CloudWatch and application metrics in separate tools — during an incident we're context-switching between multiple consoles to correlate what's happening, which slows down our MTTR.",
+        "pitchStatement": "New Relic streams all your CloudWatch metrics and correlates them with APM, log, and trace data in a single unified dashboard — so your on-call engineer sees the full picture in one place during an incident, cutting MTTR by eliminating console-switching.",
+        "discoveryQuestion": "During your last production incident, how many different monitoring tools or consoles did your team have to check before identifying the root cause?",
+        "nrqlExample": "SELECT average(aws.ec2.CPUUtilization), average(duration) FROM Metric, Transaction WHERE aws.region = 'us-east-1' TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-cloudwatch-ml-baseline-alerting",
+        "title": "Custom Metric Alerting with ML-Based Baselines",
+        "nrProduct": "Infrastructure Monitoring, Applied Intelligence",
+        "nrFeature": "Anomaly Detection, Alerts",
+        "customerPainPoint": "We set static thresholds for CloudWatch alarms but they're constantly firing during normal business cycles like daily traffic peaks and end-of-month batch jobs — alert fatigue is causing our team to ignore alarms.",
+        "pitchStatement": "New Relic's ML-based anomaly detection learns your metric seasonality — daily, weekly, and event-driven patterns — and fires alerts only when behavior deviates from expected norms, dramatically reducing false positives while catching real anomalies your static thresholds miss.",
+        "discoveryQuestion": "How much alert fatigue does your team experience from CloudWatch alarms — and do you have a sense of what percentage of alarms are false positives due to expected traffic patterns?",
+        "nrqlExample": "SELECT average(aws.lambda.Errors) FROM Metric WHERE aws.region = 'us-east-1' FACET aws.lambda.FunctionName TIMESERIES 1 hour"
+      },
+      {
+        "id": "uc-cloudwatch-cross-service-correlation",
+        "title": "Cross-Service Correlation (Lambda Errors → DynamoDB Throttles)",
+        "nrProduct": "Infrastructure Monitoring, APM",
+        "nrFeature": "Correlated Dashboards, Service Maps",
+        "customerPainPoint": "When Lambda functions start erroring, we don't know if the issue is in the function code or a downstream service — we check CloudWatch for Lambda, then separately for DynamoDB, then for SQS, wasting 30 minutes just correlating timestamps.",
+        "pitchStatement": "New Relic correlates CloudWatch metrics across Lambda, DynamoDB, SQS, and other services in a single timeline view, so when Lambda errors spike you can immediately see if DynamoDB throttles or SQS delivery failures are the upstream cause — without switching dashboards.",
+        "discoveryQuestion": "When you're investigating a Lambda error spike, how long does it typically take to determine whether a downstream AWS service like DynamoDB or SQS is contributing to the errors?",
+        "nrqlExample": "SELECT sum(aws.lambda.Errors), sum(aws.dynamodb.UserErrors + aws.dynamodb.ThrottledRequests), sum(aws.sqs.NumberOfMessagesSent) FROM Metric TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-cloudwatch-metric-retention",
+        "title": "Historical Metric Retention Beyond CloudWatch Limits",
+        "nrProduct": "Infrastructure Monitoring, Dashboards",
+        "nrFeature": "Long-Term Metric Storage, Trend Analysis",
+        "customerPainPoint": "CloudWatch only retains high-resolution metrics for 3 hours and standard metrics for 15 months — we need to do year-over-year capacity planning and trend analysis but we run out of history when we need it most.",
+        "pitchStatement": "New Relic retains all your CloudWatch metrics indefinitely at full resolution, so you can query year-over-year trends for capacity planning, compare this Black Friday to last year's, or analyze long-term infrastructure cost drivers without losing historical data.",
+        "discoveryQuestion": "Have you ever needed to look at CloudWatch metric history for capacity planning or trend analysis and hit the retention limit — and how did that limitation affect your ability to plan?",
+        "nrqlExample": "SELECT average(aws.ec2.CPUUtilization) FROM Metric FACET aws.ec2.InstanceId COMPARE WITH 1 year ago TIMESERIES 1 day SINCE 1 year ago"
+      }
+    ],
+    "aws-xray": [
+      {
+        "id": "uc-xray-end-to-end-trace",
+        "title": "End-to-End Trace Visualization Across Lambda, ECS, and EC2",
+        "nrProduct": "Distributed Tracing, APM",
+        "nrFeature": "Trace Waterfall, Service Maps",
+        "customerPainPoint": "Our application spans Lambda functions, ECS containers, and EC2 instances and when something is slow, we can't follow a single request across all three environments — X-Ray gives us fragments but no complete picture.",
+        "pitchStatement": "New Relic ingests X-Ray trace data and combines it with native APM instrumentation to stitch together complete end-to-end traces across Lambda, ECS, and EC2 in a single waterfall view — so you see every hop a request makes and where time is actually spent.",
+        "discoveryQuestion": "Can you currently follow a single user request from the frontend all the way through Lambda, ECS, and EC2 in one unified trace view — or do you have gaps in your trace visibility?",
+        "nrqlExample": "SELECT count(*), average(duration) FROM Span WHERE cloud.provider = 'aws' FACET service.name, name ORDER BY average(duration) DESC LIMIT 20"
+      },
+      {
+        "id": "uc-xray-service-map-latency",
+        "title": "Service Map with Actual Latency Contribution Per Segment",
+        "nrProduct": "Distributed Tracing",
+        "nrFeature": "Service Maps, Segment Analysis",
+        "customerPainPoint": "We have an X-Ray service map but it just shows connections — it doesn't tell us which service segment is consuming the most time in a slow request, so optimization efforts are based on guesswork rather than data.",
+        "pitchStatement": "New Relic's service map enriches X-Ray data with latency contribution per segment, showing you not just that ServiceA calls ServiceB, but that ServiceB accounts for 73% of total request latency — making optimization priorities obvious and measurable.",
+        "discoveryQuestion": "On your current service map, can you immediately see which service is contributing the most latency to your slowest user-facing requests — without having to drill into individual traces?",
+        "nrqlExample": "SELECT percentile(duration, 50, 95, 99), count(*) FROM Span FACET service.name WHERE parentId IS NOT NULL TIMESERIES 10 minutes"
+      },
+      {
+        "id": "uc-xray-error-propagation",
+        "title": "Error Propagation Path Identification",
+        "nrProduct": "Distributed Tracing, APM",
+        "nrFeature": "Error Analysis, Trace Waterfall",
+        "customerPainPoint": "When our application returns a 500 error, we don't know where in the call chain the root error occurred — a downstream service error propagates up through five layers and by the time we see it, the original error context is lost.",
+        "pitchStatement": "New Relic traces error propagation through your distributed system, identifying the originating service and error alongside every downstream service that propagated it — so your team immediately knows whether to fix the root cause service or add better error handling in an intermediate layer.",
+        "discoveryQuestion": "When a user-facing error occurs in your distributed application, how quickly can you identify the originating service that caused the error versus the services that just propagated it?",
+        "nrqlExample": "SELECT count(*) FROM Span WHERE error = true FACET service.name, error.message TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-xray-p99-latency-drilldown",
+        "title": "P99 Latency Drill-Down by Service Segment",
+        "nrProduct": "Distributed Tracing, APM",
+        "nrFeature": "Trace Analysis, Key Transactions",
+        "customerPainPoint": "Our p99 latency is twice our p50 and we don't know which specific service segment or operation is responsible for the outlier traces — we're trying to improve tail latency without knowing where to look.",
+        "pitchStatement": "New Relic lets you filter X-Ray traces to the p99 latency bucket and compare segment durations against median traces, immediately revealing which service or operation behaves differently in slow requests — giving you a precise optimization target.",
+        "discoveryQuestion": "Do you have the ability to isolate your slowest 1% of traces and compare them segment-by-segment against your median traces to identify which operation is responsible for tail latency?",
+        "nrqlExample": "SELECT percentile(duration, 50, 90, 99) FROM Span WHERE service.name IS NOT NULL FACET service.name, name ORDER BY percentile(duration, 99) DESC LIMIT 10"
+      },
+      {
+        "id": "uc-xray-sampling-gap-detection",
+        "title": "Sampling Gap Detection and Trace Coverage Validation",
+        "nrProduct": "Distributed Tracing",
+        "nrFeature": "Trace Sampling Analysis",
+        "customerPainPoint": "X-Ray samples only a fraction of our traces and we have no visibility into what we're missing — we might be sampling away the exact slow or error traces that would explain our p99 latency and intermittent failures.",
+        "pitchStatement": "New Relic's distributed tracing uses Infinite Tracing to capture 100% of traces and apply head-based sampling that prioritizes anomalous, slow, and error traces — ensuring the traces you most need for debugging are never sampled away.",
+        "discoveryQuestion": "Are you concerned that X-Ray sampling is discarding the traces you most need — specifically the slow or error traces that would explain your tail latency and intermittent failures?",
+        "nrqlExample": "SELECT count(*) AS 'Total Spans', uniqueCount(traceId) AS 'Unique Traces', percentage(count(*), WHERE error = true) AS 'Error Span %' FROM Span WHERE service.name IS NOT NULL TIMESERIES 1 hour"
+      }
+    ]
+  }
+}
