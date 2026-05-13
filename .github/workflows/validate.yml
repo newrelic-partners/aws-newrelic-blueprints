@@ -1,0 +1,25 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate JSON syntax
+        run: |
+          for f in data/*.json content/*.json; do
+            echo "Checking $f …"
+            python3 -m json.tool "$f" > /dev/null
+          done
+
+      - name: Cross-reference integrity check
+        run: python3 .github/scripts/check_refs.py
+
+      - name: Check internal file references
+        run: python3 .github/scripts/check_file_refs.py
