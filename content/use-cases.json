@@ -943,6 +943,110 @@
         "discoveryQuestion": "Are you concerned that X-Ray sampling is discarding the traces you most need — specifically the slow or error traces that would explain your tail latency and intermittent failures?",
         "nrqlExample": "SELECT count(*) AS 'Total Spans', uniqueCount(traceId) AS 'Unique Traces', percentage(count(*), WHERE error = true) AS 'Error Span %' FROM Span WHERE service.name IS NOT NULL TIMESERIES 1 hour"
       }
+    ],
+    "aws-security-hub": [
+      {
+        "id": "uc-sechub-unified-findings-dashboard",
+        "title": "Unified Security Findings Dashboard Across All AWS Services",
+        "nrProduct": "Log Management, Security Analytics",
+        "nrFeature": "Security Hub Findings Integration, Custom Dashboards",
+        "customerPainPoint": "Security findings from GuardDuty, Inspector, Macie, and IAM Access Analyzer are siloed in separate AWS consoles — we have no single place to see our overall security posture, and critical findings get missed because no one checks every console.",
+        "pitchStatement": "New Relic ingests Security Hub findings from all connected AWS services into a single dashboard that shows your overall finding count by severity, service source, and account — giving your security team one pane of glass instead of five separate consoles to monitor.",
+        "discoveryQuestion": "How many different AWS security consoles does your team need to check today to get a complete picture of your security posture — and do you have a single view that aggregates findings across GuardDuty, Inspector, and Macie?",
+        "nrqlExample": "SELECT count(*) AS 'Total Findings' FROM Log WHERE logtype = 'aws-securityhub' FACET severity.label, productName WHERE severity.label IN ('CRITICAL', 'HIGH', 'MEDIUM') SINCE 24 hours ago"
+      },
+      {
+        "id": "uc-sechub-critical-alert-response",
+        "title": "Real-Time Alerting on Critical and High Severity Findings",
+        "nrProduct": "Alerts, Log Management",
+        "nrFeature": "Log-Based Alerting, Incident Intelligence",
+        "customerPainPoint": "We find out about critical Security Hub findings hours after they're generated because no one monitors the console in real time — by the time we respond, a compromised resource has had time to exfiltrate data or pivot to other systems.",
+        "pitchStatement": "New Relic creates real-time alerts the moment a CRITICAL or HIGH severity Security Hub finding arrives — routing to PagerDuty, Slack, or your on-call system so your team responds in minutes, not hours, with the full finding detail already in the alert.",
+        "discoveryQuestion": "What is your current mean time to detect a critical Security Hub finding — and does your team get paged immediately when GuardDuty flags a potential data exfiltration or credential compromise?",
+        "nrqlExample": "SELECT count(*) AS 'Critical Findings' FROM Log WHERE logtype = 'aws-securityhub' AND severity.label = 'CRITICAL' FACET productName, title TIMESERIES 15 minutes"
+      },
+      {
+        "id": "uc-sechub-compliance-posture",
+        "title": "Compliance Posture Score Trending Over Time",
+        "nrProduct": "Dashboards, Log Management",
+        "nrFeature": "Security Hub Standards Integration, Trend Dashboards",
+        "customerPainPoint": "Our CISO needs monthly compliance reports showing whether we're meeting CIS AWS Foundations Benchmark and AWS Foundational Security Best Practices — today it takes a week of manual effort to compile that data and by the time it's ready it's already stale.",
+        "pitchStatement": "New Relic tracks Security Hub compliance control pass/fail findings over time, giving your CISO a live compliance score trend dashboard that shows whether your posture is improving or regressing — with drill-down into the specific failing controls driving your score down.",
+        "discoveryQuestion": "Can you show your CISO a live view of your CIS benchmark compliance score trend over the past 90 days — and quickly identify which controls are failing and which teams own those resources?",
+        "nrqlExample": "SELECT count(*) AS 'Failed Controls' FROM Log WHERE logtype = 'aws-securityhub' AND complianceStatus = 'FAILED' FACET productName, controlId TIMESERIES 1 day SINCE 90 days ago"
+      },
+      {
+        "id": "uc-sechub-infra-correlation",
+        "title": "Correlate Security Findings with Infrastructure and Application Changes",
+        "nrProduct": "Security Analytics, APM, Infrastructure Monitoring",
+        "nrFeature": "Cross-Telemetry Correlation, Change Tracking",
+        "customerPainPoint": "When a security finding fires, we can't tell if it's related to a recent deployment, a configuration change, or an actual external attack — we waste hours investigating benign findings that were triggered by our own infrastructure changes.",
+        "pitchStatement": "New Relic correlates Security Hub findings with infrastructure deployment events and APM change markers in a unified timeline, so your team immediately sees whether a new finding coincides with a code deployment, a CloudFormation stack update, or an anomalous external IP — cutting investigation time from hours to minutes.",
+        "discoveryQuestion": "When a security alert fires, how long does it take to determine whether it was caused by your own team's changes versus an external threat actor — and do you have a single view that shows both?",
+        "nrqlExample": "SELECT count(*) AS 'Findings', latest(title) AS 'Latest Finding' FROM Log WHERE logtype = 'aws-securityhub' AND severity.label IN ('CRITICAL','HIGH') FACET awsAccountId, awsRegion TIMESERIES 1 hour"
+      },
+      {
+        "id": "uc-sechub-mttd-mttr",
+        "title": "Security MTTD and MTTR Measurement",
+        "nrProduct": "Alerts, Dashboards",
+        "nrFeature": "Incident Tracking, SLA Dashboards",
+        "customerPainPoint": "Our security team has no way to measure how quickly we detect and remediate findings — leadership asks for MTTD and MTTR metrics but we can't produce them, which makes it impossible to demonstrate security program improvement over time.",
+        "pitchStatement": "New Relic tracks Security Hub finding creation timestamps alongside alert acknowledgment and resolution times, giving your security leadership a live MTTD/MTTR dashboard that shows detection and remediation velocity trends — and which finding types take longest to close.",
+        "discoveryQuestion": "Do you currently track MTTD and MTTR for security findings — and can you show improvement trends to your CISO or security board to demonstrate the ROI of your security tooling investments?",
+        "nrqlExample": "SELECT average(numeric(updatedAt) - numeric(createdAt)) / 3600000 AS 'Avg Hours to Update' FROM Log WHERE logtype = 'aws-securityhub' AND workflowStatus = 'RESOLVED' FACET severity.label SINCE 30 days ago"
+      }
+    ],
+    "aws-bedrock": [
+      {
+        "id": "uc-bedrock-token-cost-tracking",
+        "title": "LLM Token Usage and Cost Tracking by Model and Application",
+        "nrProduct": "AI Monitoring, Dashboards",
+        "nrFeature": "AI Monitoring Token Analytics, Cost Dashboards",
+        "customerPainPoint": "Our Bedrock spend is growing month over month and we have no visibility into which applications, teams, or features are driving the cost — we can't tell if it's legitimate usage growth or an inefficient prompt that's sending 10x more tokens than necessary.",
+        "pitchStatement": "New Relic AI Monitoring captures input and output token counts for every Bedrock invocation, letting you break down token spend by application, model, user session, and feature — so you can identify which prompts are over-tokenized and where to optimize before your bill doubles again.",
+        "discoveryQuestion": "Do you know which application or feature is your top Bedrock cost driver today — and can you see token counts per request to identify prompts that could be optimized to cut your AI spend?",
+        "nrqlExample": "SELECT sum(llm.inputTokenCount) AS 'Input Tokens', sum(llm.outputTokenCount) AS 'Output Tokens', sum(llm.inputTokenCount + llm.outputTokenCount) AS 'Total Tokens' FROM LlmChatCompletionSummary FACET appName, llm.model TIMESERIES 1 day SINCE 30 days ago"
+      },
+      {
+        "id": "uc-bedrock-invocation-latency",
+        "title": "Model Invocation Latency and P99 Performance Tracking",
+        "nrProduct": "AI Monitoring, APM",
+        "nrFeature": "AI Monitoring Response Time Analysis, Trace Correlation",
+        "customerPainPoint": "Our AI-powered features have unpredictable response times — some requests complete in 1 second and others take 15 seconds, and we have no idea whether the latency is in our application code, network, or the model itself — users are complaining about slow responses.",
+        "pitchStatement": "New Relic AI Monitoring measures time-to-first-token and total response duration for every Bedrock call, separating model latency from your application processing time — so you can tell immediately whether a slow AI response is a model throughput issue, a prompt complexity problem, or a bottleneck in your application code.",
+        "discoveryQuestion": "When your AI-powered feature is slow, can you tell whether the latency is coming from the Bedrock model itself, your prompt construction code, or downstream processing — and do you have p99 latency data for each model you're using?",
+        "nrqlExample": "SELECT percentile(duration, 50, 95, 99) AS 'Response Time (ms)' FROM LlmChatCompletionSummary FACET llm.model, appName TIMESERIES 30 minutes"
+      },
+      {
+        "id": "uc-bedrock-error-rate-monitoring",
+        "title": "Model Error Rate and Throttling Incident Detection",
+        "nrProduct": "AI Monitoring, Alerts",
+        "nrFeature": "AI Monitoring Error Tracking, Bedrock CloudWatch Metrics",
+        "customerPainPoint": "We don't know when Bedrock starts throttling our requests or returning errors until users start complaining — by then we've had minutes of degraded AI features and no visibility into whether it was a quota issue, a model availability problem, or bad input from our application.",
+        "pitchStatement": "New Relic combines Bedrock CloudWatch metrics (InvocationClientErrors, InvocationServerErrors, InvocationThrottles) with AI Monitoring error events to give you real-time alerting on throttling and error spikes — with enough context to distinguish a quota breach from a model service disruption before users notice.",
+        "discoveryQuestion": "How do you currently detect when Bedrock starts throttling your application — do you find out proactively or reactively after users report degraded AI features?",
+        "nrqlExample": "SELECT sum(aws.bedrock.InvocationClientErrors) AS 'Client Errors', sum(aws.bedrock.InvocationServerErrors) AS 'Server Errors', sum(aws.bedrock.InvocationThrottles) AS 'Throttles' FROM Metric FACET aws.bedrock.ModelId TIMESERIES 5 minutes"
+      },
+      {
+        "id": "uc-bedrock-ai-app-traces",
+        "title": "End-to-End AI Application Tracing from User Request to LLM Response",
+        "nrProduct": "AI Monitoring, APM, Distributed Tracing",
+        "nrFeature": "LLM Trace Correlation, AI Monitoring Spans",
+        "customerPainPoint": "When our AI feature returns a wrong or low-quality answer, we have no trace connecting the user's original question through our RAG pipeline, the Bedrock prompt we sent, and the model's response — debugging AI quality issues requires manually reconstructing what happened from scattered logs.",
+        "pitchStatement": "New Relic AI Monitoring auto-instruments your Bedrock SDK calls and links each LLM invocation to the parent APM transaction — giving you a complete trace from user input through your retrieval pipeline, the exact prompt sent to the model, and the raw response returned, all in a single waterfall view.",
+        "discoveryQuestion": "When an AI feature produces a bad response, how long does it take your team to reconstruct the full chain from user input → prompt construction → model response → application output to diagnose whether the issue is in your code or the model?",
+        "nrqlExample": "SELECT count(*), average(duration) FROM LlmChatCompletionSummary FACET appName, llm.model, llm.finishReason WHERE llm.finishReason != 'stop' SINCE 1 hour ago"
+      },
+      {
+        "id": "uc-bedrock-model-comparison",
+        "title": "Multi-Model Performance and Cost Comparison",
+        "nrProduct": "AI Monitoring, Dashboards",
+        "nrFeature": "AI Monitoring Model Analytics, Custom Dashboards",
+        "customerPainPoint": "We're evaluating multiple Bedrock foundation models (Claude, Titan, Llama) for our use case but have no objective data on their relative latency, cost per request, and error rates in production — we're making model selection decisions based on benchmarks that don't reflect our actual traffic patterns.",
+        "pitchStatement": "New Relic AI Monitoring compares latency, token efficiency, and error rates across every Bedrock model your application uses in production, so you can make model selection decisions based on real workload data — not vendor benchmarks — and quantify the cost and performance tradeoff of switching models.",
+        "discoveryQuestion": "If you're using multiple Bedrock models or planning to evaluate alternatives, do you have production data showing how they compare on your actual traffic for latency, cost per request, and quality metrics?",
+        "nrqlExample": "SELECT average(duration) AS 'Avg Latency (ms)', average(llm.inputTokenCount + llm.outputTokenCount) AS 'Avg Tokens', rate(count(*), 1 minute) AS 'Requests/min' FROM LlmChatCompletionSummary FACET llm.model SINCE 7 days ago"
+      }
     ]
   }
 }

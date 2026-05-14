@@ -64,6 +64,14 @@
       "iconPath": "Icon-package_01302026.31b40d126ed27079b708594940ad577a86150582/Category-Icons_01302026/Arch-Category_64/Arch-Category_Management-Tools_64.svg",
       "color": "#a855f7"
     },
+    {
+      "id": "cat-ai",
+      "label": "AI & Machine Learning",
+      "type": "category",
+      "tier": 1,
+      "iconPath": "Icon-package_01302026.31b40d126ed27079b708594940ad577a86150582/Category-Icons_01302026/Arch-Category_64/Arch-Category_Artificial-Intelligence_64.svg",
+      "color": "#f59e0b"
+    },
 
     {
       "id": "aws-lambda",
@@ -350,6 +358,20 @@
       "docUrl": "https://docs.newrelic.com/docs/logs/forward-logs/aws-lambda-sending-logs-s3/",
       "awsDocUrl": "https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html"
     },
+    {
+      "id": "aws-security-hub",
+      "label": "AWS Security Hub",
+      "type": "service",
+      "tier": 2,
+      "categoryId": "cat-security",
+      "iconPath": "Icon-package_01302026.31b40d126ed27079b708594940ad577a86150582/Architecture-Service-Icons_01302026/Arch_Security-Identity/64/Arch_AWS-Security-Hub_64.svg",
+      "transportIds": ["t-cwlogs"],
+      "primaryTransportId": "t-cwlogs",
+      "nrProducts": ["Logs", "Security Analytics", "Alerts", "Dashboards"],
+      "pitchHeadline": "Aggregate findings from GuardDuty, Inspector, and Macie — a unified security posture in New Relic",
+      "docUrl": "https://docs.newrelic.com/docs/logs/forward-logs/aws-lambda-sending-logs-s3/",
+      "awsDocUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html"
+    },
 
     {
       "id": "aws-cloudwatch",
@@ -378,6 +400,21 @@
       "pitchHeadline": "Replace X-Ray's fragmented traces with New Relic's full-stack distributed tracing and service maps",
       "docUrl": "https://docs.newrelic.com/docs/distributed-tracing/infinite-tracing/set-trace-observer/",
       "awsDocUrl": "https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html"
+    },
+
+    {
+      "id": "aws-bedrock",
+      "label": "Amazon Bedrock",
+      "type": "service",
+      "tier": 2,
+      "categoryId": "cat-ai",
+      "iconPath": "Icon-package_01302026.31b40d126ed27079b708594940ad577a86150582/Architecture-Service-Icons_01302026/Arch_Artificial-Intelligence/64/Arch_Amazon-Bedrock_64.svg",
+      "transportIds": ["t-cwms", "t-cwlogs", "t-adot"],
+      "primaryTransportId": "t-cwms",
+      "nrProducts": ["AI Monitoring", "APM", "Logs", "Dashboards", "Alerts"],
+      "pitchHeadline": "Monitor LLM performance, token costs, and model errors — AI observability from prompt to response",
+      "docUrl": "https://docs.newrelic.com/docs/ai-monitoring/intro-to-ai-monitoring/",
+      "awsDocUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html"
     }
   ],
 
@@ -389,6 +426,7 @@
     { "source": "cat-streaming", "target": "nr-platform", "type": "structural" },
     { "source": "cat-security",  "target": "nr-platform", "type": "structural" },
     { "source": "cat-monitoring","target": "nr-platform", "type": "structural" },
+    { "source": "cat-ai",        "target": "nr-platform", "type": "structural" },
 
     { "source": "aws-lambda",     "target": "cat-compute",    "type": "structural" },
     { "source": "aws-ec2",        "target": "cat-compute",    "type": "structural" },
@@ -410,8 +448,10 @@
     { "source": "aws-waf",        "target": "cat-security",   "type": "structural" },
     { "source": "aws-cloudtrail", "target": "cat-security",   "type": "structural" },
     { "source": "aws-inspector",  "target": "cat-security",   "type": "structural" },
-    { "source": "aws-cloudwatch", "target": "cat-monitoring", "type": "structural" },
-    { "source": "aws-xray",       "target": "cat-monitoring", "type": "structural" },
+    { "source": "aws-cloudwatch",    "target": "cat-monitoring", "type": "structural" },
+    { "source": "aws-xray",          "target": "cat-monitoring", "type": "structural" },
+    { "source": "aws-security-hub",  "target": "cat-security",  "type": "structural" },
+    { "source": "aws-bedrock",       "target": "cat-ai",         "type": "structural" },
 
     { "source": "aws-lambda",     "target": "nr-platform", "type": "data-flow", "transportId": "t-lambda-ext" },
     { "source": "aws-ec2",        "target": "nr-platform", "type": "data-flow", "transportId": "t-apoll" },
@@ -433,7 +473,9 @@
     { "source": "aws-waf",        "target": "nr-platform", "type": "data-flow", "transportId": "t-cwlogs" },
     { "source": "aws-cloudtrail", "target": "nr-platform", "type": "data-flow", "transportId": "t-cwlogs" },
     { "source": "aws-inspector",  "target": "nr-platform", "type": "data-flow", "transportId": "t-cwlogs" },
-    { "source": "aws-cloudwatch", "target": "nr-platform", "type": "data-flow", "transportId": "t-apoll" },
-    { "source": "aws-xray",       "target": "nr-platform", "type": "data-flow", "transportId": "t-adot" }
+    { "source": "aws-cloudwatch",   "target": "nr-platform", "type": "data-flow", "transportId": "t-apoll" },
+    { "source": "aws-xray",         "target": "nr-platform", "type": "data-flow", "transportId": "t-adot" },
+    { "source": "aws-security-hub", "target": "nr-platform", "type": "data-flow", "transportId": "t-cwlogs" },
+    { "source": "aws-bedrock",      "target": "nr-platform", "type": "data-flow", "transportId": "t-cwms" }
   ]
 }
