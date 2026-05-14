@@ -94,6 +94,7 @@
 .link--t-cwlogs     { stroke: var(--t-cwlogs); }
 .link--t-cwms       { stroke: var(--t-cwms); }
 .link--t-apoll      { stroke: var(--t-apoll); }
+.link--t-mcp        { stroke: var(--t-mcp); }
 
 /* Animated flow on active data-flow links */
 .link--data-flow.link--active {

@@ -15,6 +15,7 @@
   --t-lambda-ext: #00c9a7;
   --t-cwlogs:     #3b82f6;
   --t-adot:       #8b5cf6;
+  --t-mcp:        #e879f9;
 
   /* Category accent colors */
   --cat-compute:   #ef4444;
@@ -269,6 +270,7 @@ html, body {
 .legend__dot.t-cwlogs      { background: var(--t-cwlogs); }
 .legend__dot.t-cwms        { background: var(--t-cwms); }
 .legend__dot.t-apoll       { background: var(--t-apoll); }
+.legend__dot.t-mcp         { background: var(--t-mcp); }
 
 .legend__node-hub {
   width: 14px; height: 14px;

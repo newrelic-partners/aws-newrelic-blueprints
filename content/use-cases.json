@@ -1038,6 +1038,98 @@
         "nrqlExample": "SELECT average(numeric(updatedAt) - numeric(createdAt)) / 3600000 AS 'Avg Hours to Update' FROM Log WHERE logtype = 'aws-securityhub' AND workflowStatus = 'RESOLVED' FACET severity.label SINCE 30 days ago"
       }
     ],
+    "aws-devops-agent": [
+      {
+        "id": "uc-devops-agent-rca",
+        "title": "AI-Driven Root Cause Analysis During Incidents",
+        "persona": "SRE",
+        "nrProduct": "APM, Logs, Alerts, Distributed Tracing",
+        "nrFeature": "NRQL via MCP, Trace Correlation, Error Analytics",
+        "customerPainPoint": "During an incident, our SREs spend 30+ minutes manually querying multiple tools to gather context — error rates, deployment history, downstream dependencies — before they can even start root cause analysis. The agent needs the same information but has no access to our observability platform.",
+        "pitchStatement": "AWS DevOps Agent queries New Relic in real time via the MCP server — pulling error traces, deployment markers, and correlated log events for the exact failing service — so your agent can surface a ranked list of probable causes in seconds, not the 30 minutes it takes a human to gather the same context manually.",
+        "discoveryQuestion": "During your last major incident, how long did it take your SRE team to gather enough observability context before they could form a hypothesis on root cause — and what would it mean to cut that to under a minute?",
+        "nrqlExample": "SELECT count(*), percentage(count(*), WHERE error IS true) AS 'Error %' FROM Transaction FACET name, error.message SINCE 30 minutes ago LIMIT 20"
+      },
+      {
+        "id": "uc-devops-agent-runbook",
+        "title": "Automated Runbook Execution with Live Observability Gates",
+        "persona": "SRE",
+        "nrProduct": "Alerts, APM, Infrastructure Monitoring",
+        "nrFeature": "Alert Conditions, MCP Query Gates, Automated Remediation",
+        "customerPainPoint": "Our automated runbooks execute remediation steps blindly — they restart services or scale resources without checking whether the action actually improved the health signal. We've had runbooks make incidents worse by restarting healthy services while the real problem was elsewhere.",
+        "pitchStatement": "New Relic MCP lets AWS DevOps Agent check live health signals between every runbook step — confirming error rates dropped, latency normalized, and throughput recovered before moving forward — so automated remediation is validated by real telemetry, not just a timer or a success exit code.",
+        "discoveryQuestion": "Do your automated runbooks currently validate that each remediation step actually improved the health of the system before proceeding — or do they execute steps sequentially regardless of outcome?",
+        "nrqlExample": "SELECT average(duration), percentage(count(*), WHERE error IS true) AS 'Error Rate' FROM Transaction WHERE appName = 'your-service' COMPARE WITH 15 minutes ago"
+      },
+      {
+        "id": "uc-devops-agent-cicd-quality",
+        "title": "CI/CD Pipeline Observability for Release Quality Gates",
+        "persona": "DevOps Engineer",
+        "nrProduct": "APM, Change Tracking, Alerts",
+        "nrFeature": "Deployment Markers, Error Rate Comparison, Automated Rollback Signal",
+        "customerPainPoint": "We deploy to production dozens of times a week and rely on manual monitoring for 15 minutes post-deploy to catch regressions — this slows release velocity and still misses slow-burn degradations that don't spike immediately.",
+        "pitchStatement": "AWS DevOps Agent queries New Relic change tracking data immediately after each deployment, comparing error rates, latency, and throughput against the pre-deployment baseline — and can automatically trigger a rollback if New Relic signals a statistically significant regression, all without human eyes on a dashboard.",
+        "discoveryQuestion": "After a deployment, how long does your team watch dashboards before declaring success — and do you have an automated signal from your observability platform that tells you whether the release degraded performance?",
+        "nrqlExample": "SELECT average(duration) AS 'Avg Latency', percentage(count(*), WHERE error IS true) AS 'Error Rate' FROM Transaction WHERE appName = 'your-service' SINCE deployment UNTIL 15 minutes after deployment COMPARE WITH 1 hour before deployment"
+      },
+      {
+        "id": "uc-devops-agent-oncall-triage",
+        "title": "On-Call Alert Triage with Contextual Observability Summary",
+        "persona": "SRE, On-Call Engineer",
+        "nrProduct": "Alerts, APM, Logs, Infrastructure Monitoring",
+        "nrFeature": "Alert Incident Context, MCP Summarization, Cross-Signal Correlation",
+        "customerPainPoint": "Our on-call engineers get paged at 3am with a terse alert like 'error rate above 5%' and then spend 10 minutes navigating dashboards in a panic to understand scope, impacted users, and recent changes — that context-gathering delay increases MTTR.",
+        "pitchStatement": "When an alert fires, AWS DevOps Agent uses New Relic MCP to instantly assemble a situation report: which services are impacted, how many users are affected, what changed in the last hour, and which correlated signals (logs, traces, infra) point to the probable cause — delivered before the on-call engineer finishes reading the page.",
+        "discoveryQuestion": "When your on-call engineer gets paged, how long does it take them to build a mental model of what's failing and why — and what would a pre-assembled situation report containing that context be worth to your MTTR?",
+        "nrqlExample": "SELECT count(*) AS 'Affected Users', average(duration) AS 'Latency', percentage(count(*), WHERE error IS true) AS 'Error Rate' FROM Transaction FACET appName SINCE 1 hour ago"
+      }
+    ],
+    "aws-kiro": [
+      {
+        "id": "uc-kiro-debug-with-traces",
+        "title": "IDE-Native Debugging with Live Distributed Trace Context",
+        "persona": "Developer",
+        "nrProduct": "APM, Distributed Tracing, Errors Inbox",
+        "nrFeature": "Trace Waterfall, Error Group Details, MCP Contextual Query",
+        "customerPainPoint": "When developers try to debug a production error, they have to leave their IDE, navigate to New Relic, find the right service, locate the failing trace, and copy error details back to their editor — context-switching that kills flow state and slows down the fix cycle.",
+        "pitchStatement": "AWS Kiro calls the New Relic MCP server from inside the IDE — pulling the exact stack trace, span-level timing, and correlated logs for the error the developer is debugging — so they get production context in their coding environment without switching tabs, and can write the fix with full observability data in view.",
+        "discoveryQuestion": "How many browser tabs does your average developer have open while debugging a production issue — and what would it mean for developer flow state if New Relic trace data appeared directly in their IDE alongside the code?",
+        "nrqlExample": "SELECT * FROM TransactionError WHERE appName = 'your-service' SINCE 1 hour ago LIMIT 10"
+      },
+      {
+        "id": "uc-kiro-performance-regression",
+        "title": "Pre-Commit Performance Regression Detection",
+        "persona": "Developer",
+        "nrProduct": "APM, Distributed Tracing",
+        "nrFeature": "Transaction Performance Baselines, MCP Query, Code-Level Metrics",
+        "customerPainPoint": "Performance regressions introduced during development only get caught in production — by then, the developer who wrote the code has moved on and fixing it requires context reconstruction. We have no mechanism to check latency baselines before a code change ships.",
+        "pitchStatement": "As part of the Kiro code review workflow, New Relic MCP surfaces the current production latency baseline for the function or endpoint being modified — so the developer can see whether their change is likely to regress performance before the PR is merged, not after users complain.",
+        "discoveryQuestion": "Do your developers have access to production performance baselines for the specific endpoints they're modifying while they're writing the code — or do performance regressions only surface after deployment?",
+        "nrqlExample": "SELECT percentile(duration, 50, 95, 99) FROM Transaction WHERE name LIKE '%/api/your-endpoint%' TIMESERIES 1 hour SINCE 7 days ago"
+      },
+      {
+        "id": "uc-kiro-log-error-analysis",
+        "title": "Conversational Log and Error Analysis from the IDE",
+        "persona": "Developer",
+        "nrProduct": "Logs, Errors Inbox",
+        "nrFeature": "Log Management, Error Group Clustering, MCP Natural Language Query",
+        "customerPainPoint": "Developers write NRQL or learn New Relic's query language just to investigate errors in their own service — there's a steep learning curve that means junior developers often skip the observability step entirely and deploy fixes based on guesswork.",
+        "pitchStatement": "AWS Kiro translates natural-language questions from developers — 'show me all errors from my service in the last hour with their stack traces' — into New Relic MCP queries, returning results directly in the IDE chat. Zero NRQL required, making observability accessible to every developer on the team, not just the ones who know the query language.",
+        "discoveryQuestion": "What percentage of your developers regularly use your observability platform to investigate issues in their own services — and is the query language or navigation complexity a barrier that keeps some from using it?",
+        "nrqlExample": "SELECT message, error.class, error.message, traceId FROM Log WHERE service.name = 'your-service' AND level = 'ERROR' SINCE 1 hour ago LIMIT 50"
+      },
+      {
+        "id": "uc-kiro-slo-awareness",
+        "title": "SLO Compliance Awareness During Feature Development",
+        "persona": "Developer",
+        "nrProduct": "Service Levels, APM, Alerts",
+        "nrFeature": "SLO/SLI Status, Error Budget Burn Rate, MCP Context",
+        "customerPainPoint": "Developers build features in isolation with no awareness of whether the service they're modifying is currently burning its error budget or close to an SLO breach — they find out at the next incident review that their feature shipped during a period of elevated risk.",
+        "pitchStatement": "Kiro surfaces the current SLO status and error budget burn rate for any service directly in the IDE via New Relic MCP — so before a developer ships a risky change to a service already at 80% error budget consumed, they see the signal and can coordinate with the SRE team or schedule for a lower-risk window.",
+        "discoveryQuestion": "Do your developers know the current SLO health of the service they're modifying before they merge a PR — or do they only become aware of error budget pressure after an incident or a sprint retrospective?",
+        "nrqlExample": "SELECT latest(sli.valid) AS 'Total Requests', latest(sli.good) AS 'Good Requests', (latest(sli.good) / latest(sli.valid)) * 100 AS 'Current SLI %' FROM Metric WHERE entity.guid = 'YOUR_SERVICE_GUID' SINCE 1 hour ago"
+      }
+    ],
     "aws-bedrock": [
       {
         "id": "uc-bedrock-token-cost-tracking",

@@ -429,18 +429,57 @@
       "pitchHeadline": "Monitor LLM performance, token costs, and model errors — AI observability from prompt to response",
       "docUrl": "https://docs.newrelic.com/docs/ai-monitoring/intro-to-ai-monitoring/",
       "awsDocUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html"
+    },
+
+    {
+      "id": "cat-frontier-agents",
+      "label": "Frontier Agents",
+      "type": "category",
+      "tier": 1,
+      "iconPath": "Icon-package_01302026.31b40d126ed27079b708594940ad577a86150582/Category-Icons_01302026/Arch-Category_64/Arch-Category_Developer-Tools_64.svg",
+      "color": "#7c3aed"
+    },
+
+    {
+      "id": "aws-devops-agent",
+      "label": "AWS DevOps Agent",
+      "type": "service",
+      "tier": 2,
+      "categoryId": "cat-frontier-agents",
+      "iconPath": "Icon-package_01302026.31b40d126ed27079b708594940ad577a86150582/Architecture-Service-Icons_01302026/Arch_Management-Tools/64/Arch_AWS-DevOps-Agent_64.svg",
+      "transportIds": ["t-mcp"],
+      "primaryTransportId": "t-mcp",
+      "nrProducts": ["Alerts", "APM", "Logs", "Dashboards", "AI Monitoring"],
+      "pitchHeadline": "Give your DevOps AI agent live observability context — trigger runbooks, investigate incidents, and automate RCA with New Relic data",
+      "docUrl": "https://docs.newrelic.com/docs/agentic-ai/intro-agentic-ai/",
+      "awsDocUrl": "https://aws.amazon.com/devops-guru/"
+    },
+    {
+      "id": "aws-kiro",
+      "label": "AWS Kiro",
+      "type": "service",
+      "tier": 2,
+      "categoryId": "cat-frontier-agents",
+      "iconPath": "Icon-package_01302026.31b40d126ed27079b708594940ad577a86150582/Architecture-Service-Icons_01302026/Arch_Artificial-Intelligence/64/Arch_Amazon-Bedrock-AgentCore_64.svg",
+      "transportIds": ["t-mcp"],
+      "primaryTransportId": "t-mcp",
+      "nrProducts": ["APM", "Logs", "Distributed Tracing", "Errors Inbox", "AI Monitoring"],
+      "pitchHeadline": "Supercharge developer productivity — Kiro queries New Relic error traces, logs, and performance data without leaving the IDE",
+      "docUrl": "https://docs.newrelic.com/docs/agentic-ai/intro-agentic-ai/",
+      "awsDocUrl": "https://kiro.dev/"
     }
   ],
 
   "links": [
-    { "source": "cat-compute",   "target": "nr-platform", "type": "structural" },
-    { "source": "cat-database",  "target": "nr-platform", "type": "structural" },
-    { "source": "cat-networking","target": "nr-platform", "type": "structural" },
-    { "source": "cat-storage",   "target": "nr-platform", "type": "structural" },
-    { "source": "cat-streaming", "target": "nr-platform", "type": "structural" },
-    { "source": "cat-security",  "target": "nr-platform", "type": "structural" },
-    { "source": "cat-monitoring","target": "nr-platform", "type": "structural" },
-    { "source": "cat-ai",        "target": "nr-platform", "type": "structural" },
+    { "source": "cat-compute",         "target": "nr-platform", "type": "structural" },
+    { "source": "cat-database",        "target": "nr-platform", "type": "structural" },
+    { "source": "cat-networking",      "target": "nr-platform", "type": "structural" },
+    { "source": "cat-storage",         "target": "nr-platform", "type": "structural" },
+    { "source": "cat-streaming",       "target": "nr-platform", "type": "structural" },
+    { "source": "cat-security",        "target": "nr-platform", "type": "structural" },
+    { "source": "cat-monitoring",      "target": "nr-platform", "type": "structural" },
+    { "source": "cat-ai",              "target": "nr-platform", "type": "structural" },
+    { "source": "cat-frontier-agents", "target": "nr-platform", "type": "structural" },
 
     { "source": "aws-lambda",     "target": "cat-compute",    "type": "structural" },
     { "source": "aws-ec2",        "target": "cat-compute",    "type": "structural" },
@@ -492,6 +531,12 @@
     { "source": "aws-xray",         "target": "nr-platform", "type": "data-flow", "transportId": "t-adot" },
     { "source": "aws-guardduty",    "target": "nr-platform", "type": "data-flow", "transportId": "t-cwlogs" },
     { "source": "aws-security-hub", "target": "nr-platform", "type": "data-flow", "transportId": "t-cwlogs" },
-    { "source": "aws-bedrock",      "target": "nr-platform", "type": "data-flow", "transportId": "t-cwms" }
+    { "source": "aws-bedrock",      "target": "nr-platform", "type": "data-flow", "transportId": "t-cwms" },
+
+    { "source": "aws-devops-agent", "target": "cat-frontier-agents", "type": "structural" },
+    { "source": "aws-kiro",         "target": "cat-frontier-agents", "type": "structural" },
+
+    { "source": "aws-devops-agent", "target": "nr-platform", "type": "data-flow", "transportId": "t-mcp" },
+    { "source": "aws-kiro",         "target": "nr-platform", "type": "data-flow", "transportId": "t-mcp" }
   ]
 }

@@ -59,6 +59,18 @@
       "freshnessClass": "realtime",
       "cssClass": "t-adot",
       "setupComplexity": "medium"
+    },
+    {
+      "id": "t-mcp",
+      "label": "New Relic MCP Server",
+      "shortLabel": "MCP",
+      "description": "AWS AI agents connect to New Relic via the Model Context Protocol (MCP) server, enabling real-time queries of metrics, traces, logs, and alerts as context for AI-driven decisions and actions.",
+      "protocol": "MCP over HTTPS (JSON-RPC 2.0)",
+      "path": ["AWS AI Agent", "New Relic MCP Server", "New Relic NRQL / NerdGraph API", "New Relic Platform"],
+      "latency": "sub-second",
+      "freshnessClass": "realtime",
+      "cssClass": "t-mcp",
+      "setupComplexity": "low"
     }
   ]
 }
