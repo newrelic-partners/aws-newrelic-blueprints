@@ -944,6 +944,48 @@
         "nrqlExample": "SELECT count(*) AS 'Total Spans', uniqueCount(traceId) AS 'Unique Traces', percentage(count(*), WHERE error = true) AS 'Error Span %' FROM Span WHERE service.name IS NOT NULL TIMESERIES 1 hour"
       }
     ],
+    "aws-guardduty": [
+      {
+        "id": "uc-guardduty-threat-alert",
+        "title": "Real-Time Alerting on High-Severity Threat Findings",
+        "nrProduct": "Alerts, Log Management",
+        "nrFeature": "Log-Based Alerting, Incident Intelligence",
+        "customerPainPoint": "GuardDuty generates hundreds of findings but they sit in the AWS console — our security team only checks it once a day, so credential compromise and data exfiltration attempts go undetected for hours while attackers have free reign.",
+        "pitchStatement": "New Relic forwards GuardDuty findings in real time and fires alerts the moment a HIGH or CRITICAL finding arrives — credential compromise, instance profile abuse, S3 exfiltration — routing directly to PagerDuty or Slack so your team responds in minutes, not the next morning.",
+        "discoveryQuestion": "If GuardDuty detected a compromised IAM credential right now, how quickly would your on-call team be notified — and would they have the full finding detail in the alert or have to log into AWS to investigate?",
+        "nrqlExample": "SELECT count(*) AS 'Threat Findings' FROM Log WHERE logtype = 'aws-guardduty' AND severity >= 7 FACET type, region TIMESERIES 15 minutes"
+      },
+      {
+        "id": "uc-guardduty-threat-types",
+        "title": "Threat Type Distribution and Attack Pattern Analysis",
+        "nrProduct": "Log Management, Security Analytics",
+        "nrFeature": "Security Dashboards, Log Parsing",
+        "customerPainPoint": "We know GuardDuty is generating findings but we have no visibility into the distribution of threat types — are we mostly seeing reconnaissance, credential abuse, or active exfiltration? We can't prioritize our security response without knowing what we're actually facing.",
+        "pitchStatement": "New Relic dashboards GuardDuty findings by threat type (Recon, Backdoor, CryptoCurrency, UnauthorizedAccess, Exfiltration) so your security team sees the attack pattern distribution across your environment — and can spot if a new threat category is suddenly emerging before it escalates.",
+        "discoveryQuestion": "Do you have a live view of your GuardDuty finding types by category — and would you know if crypto-mining or credential brute-force attempts suddenly spiked in your environment in the last hour?",
+        "nrqlExample": "SELECT count(*) FROM Log WHERE logtype = 'aws-guardduty' FACET type SINCE 7 days ago LIMIT 20"
+      },
+      {
+        "id": "uc-guardduty-infra-correlation",
+        "title": "Correlate GuardDuty Threats with Infrastructure and Application Context",
+        "nrProduct": "Security Analytics, Infrastructure Monitoring, APM",
+        "nrFeature": "Cross-Telemetry Correlation, Entity Explorer",
+        "customerPainPoint": "When GuardDuty flags an EC2 instance for unusual network activity, we have no idea if that instance is running a critical production service or a dev box — and we can't tell if the suspicious behavior correlates with a recent deployment or an anomalous traffic spike in our application.",
+        "pitchStatement": "New Relic links GuardDuty findings to the specific EC2 host entity, showing CPU, network, and application metrics side-by-side with the threat finding — so you immediately know the business impact of the compromised resource and whether the suspicious behavior correlates with application-layer anomalies.",
+        "discoveryQuestion": "When GuardDuty flags a specific EC2 instance, how quickly can you determine what application is running on it, whether it's production-critical, and whether there's a corresponding anomaly in your application metrics?",
+        "nrqlExample": "SELECT count(*) AS 'GuardDuty Findings', latest(detail.type) AS 'Threat Type' FROM Log WHERE logtype = 'aws-guardduty' FACET detail.resource.instanceDetails.instanceId, detail.region SINCE 24 hours ago"
+      },
+      {
+        "id": "uc-guardduty-account-compromise",
+        "title": "IAM and Account Compromise Detection Across Multi-Account Environments",
+        "nrProduct": "Log Management, Alerts",
+        "nrFeature": "Multi-Account Security Monitoring, Log Alerting",
+        "customerPainPoint": "We have 20+ AWS accounts and GuardDuty findings are fragmented across each account's console — if a compromised IAM credential is being used to make API calls across multiple accounts, we have no way to see that lateral movement pattern in one place.",
+        "pitchStatement": "New Relic aggregates GuardDuty findings from all your AWS accounts into a single view, making cross-account lateral movement visible — when the same credential or IP is generating findings in multiple accounts, New Relic surfaces the pattern that individual account consoles would never reveal.",
+        "discoveryQuestion": "If an attacker compromised an IAM credential and started making API calls across three of your AWS accounts simultaneously, would you be able to detect that cross-account lateral movement in real time — or only after investigating each account separately?",
+        "nrqlExample": "SELECT count(*) AS 'Findings' FROM Log WHERE logtype = 'aws-guardduty' AND (type LIKE 'UnauthorizedAccess%' OR type LIKE 'Recon%') FACET accountId, type TIMESERIES 1 hour SINCE 24 hours ago"
+      }
+    ],
     "aws-security-hub": [
       {
         "id": "uc-sechub-unified-findings-dashboard",

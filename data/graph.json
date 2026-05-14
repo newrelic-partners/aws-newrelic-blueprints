@@ -359,6 +359,20 @@
       "awsDocUrl": "https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html"
     },
     {
+      "id": "aws-guardduty",
+      "label": "Amazon GuardDuty",
+      "type": "service",
+      "tier": 2,
+      "categoryId": "cat-security",
+      "iconPath": "Icon-package_01302026.31b40d126ed27079b708594940ad577a86150582/Architecture-Service-Icons_01302026/Arch_Security-Identity/64/Arch_Amazon-GuardDuty_64.svg",
+      "transportIds": ["t-cwlogs"],
+      "primaryTransportId": "t-cwlogs",
+      "nrProducts": ["Logs", "Security Analytics", "Alerts", "Dashboards"],
+      "pitchHeadline": "Threat detection findings in New Relic — correlate account compromise, crypto-mining, and data exfiltration with live infra",
+      "docUrl": "https://docs.newrelic.com/docs/logs/forward-logs/aws-lambda-sending-logs-s3/",
+      "awsDocUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html"
+    },
+    {
       "id": "aws-security-hub",
       "label": "AWS Security Hub",
       "type": "service",
@@ -450,6 +464,7 @@
     { "source": "aws-inspector",  "target": "cat-security",   "type": "structural" },
     { "source": "aws-cloudwatch",    "target": "cat-monitoring", "type": "structural" },
     { "source": "aws-xray",          "target": "cat-monitoring", "type": "structural" },
+    { "source": "aws-guardduty",     "target": "cat-security",  "type": "structural" },
     { "source": "aws-security-hub",  "target": "cat-security",  "type": "structural" },
     { "source": "aws-bedrock",       "target": "cat-ai",         "type": "structural" },
 
@@ -475,6 +490,7 @@
     { "source": "aws-inspector",  "target": "nr-platform", "type": "data-flow", "transportId": "t-cwlogs" },
     { "source": "aws-cloudwatch",   "target": "nr-platform", "type": "data-flow", "transportId": "t-apoll" },
     { "source": "aws-xray",         "target": "nr-platform", "type": "data-flow", "transportId": "t-adot" },
+    { "source": "aws-guardduty",    "target": "nr-platform", "type": "data-flow", "transportId": "t-cwlogs" },
     { "source": "aws-security-hub", "target": "nr-platform", "type": "data-flow", "transportId": "t-cwlogs" },
     { "source": "aws-bedrock",      "target": "nr-platform", "type": "data-flow", "transportId": "t-cwms" }
   ]
